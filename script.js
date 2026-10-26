@@ -855,3 +855,17 @@ function updateThemeIcons(isDark) {
         sunIcon.classList.add('hidden');
     }
 }
+
+// FUNGSI TOGGLE DARK/LIGHT MODE
+function toggleDarkMode() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
+
+    const moonIcon = document.getElementById('themeMoonIcon');
+    const sunIcon = document.getElementById('themeSunIcon');
+    
+    if (moonIcon && sunIcon) {
+        moonIcon.classList.toggle('hidden', isDark);
+        sunIcon.classList.toggle('hidden', !isDark);
+    }
+}
