@@ -32,22 +32,22 @@ const PRESET_IMAGES = {
 // GLOBAL APP STATE & USER AUTH STATE
 let savingsData = [];
 let currentDetailId = null;
-let activeTab = 'berlangsung'; // 'berlangsung' | 'tercapai'
-let currentSortField = 'nama'; // 'nama' | 'persen' | 'target' | 'terkumpul'
-let currentSortOrder = 'asc'; // 'asc' | 'desc'
-let currentTxType = 'deposit'; // 'deposit' | 'withdraw'
+let activeTab = 'berlangsung';
+let currentSortField = 'nama';
+let currentSortOrder = 'asc';
+let currentTxType = 'deposit';
 let editingTxId = null;
 let selectedTxIdForModal = null;
 
 // USER MANAGEMENT STATE
 let currentUser = localStorage.getItem('tabungin_username') || '';
-let currentAuthMode = 'login'; // 'login' | 'register'
+let currentAuthMode = 'login';
 
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
-    // Memastikan modal tersembunyi saat pertama kali dimuat
     closeModalUsername();
+    closeModalChangePassword();
     updateUserUI();
     await loadStorage(); 
 });
@@ -61,6 +61,73 @@ function openModalUsername() {
 
 function closeModalUsername() {
     document.getElementById('modalUsername')?.classList.add('hidden');
+}
+
+// GANTI KATA SANDI MODAL
+function openModalChangePassword() {
+    document.getElementById('topMenu')?.classList.add('hidden');
+    document.getElementById('inputOldPassword').value = '';
+    document.getElementById('inputNewPassword').value = '';
+    document.getElementById('modalChangePassword')?.classList.remove('hidden');
+}
+
+function closeModalChangePassword() {
+    document.getElementById('modalChangePassword')?.classList.add('hidden');
+}
+
+async function handleChangePasswordSubmit(e) {
+    if (e) e.preventDefault();
+
+    if (!currentUser) {
+        showToast("Kamu belum login!");
+        return;
+    }
+
+    const oldPassword = document.getElementById('inputOldPassword')?.value || "";
+    const newPassword = document.getElementById('inputNewPassword')?.value || "";
+
+    if (!oldPassword) {
+        showToast("Masukkan kata sandi lama!");
+        return;
+    }
+
+    if (!newPassword || newPassword.length < 4) {
+        showToast("Kata sandi baru minimal 4 karakter!");
+        return;
+    }
+
+    if (!db) {
+        showToast("Koneksi database Firebase belum siap!");
+        return;
+    }
+
+    try {
+        const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+            showToast("Akun tidak ditemukan!");
+            return;
+        }
+
+        const userData = docSnap.data();
+        if (userData.password && userData.password !== oldPassword) {
+            showToast("Kata sandi lama salah!");
+            return;
+        }
+
+        // Update password baru di Firestore
+        await docRef.update({
+            password: newPassword,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast("Kata sandi berhasil diperbarui! 🔑");
+        closeModalChangePassword();
+    } catch (err) {
+        console.error("Gagal mengganti kata sandi:", err);
+        showToast("Gagal memperbarui kata sandi!");
+    }
 }
 
 function switchAuthMode(mode) {
@@ -89,7 +156,6 @@ function switchAuthMode(mode) {
     }
 }
 
-// TOGGLE SHOW/HIDE PASSWORD
 function togglePasswordVisibility() {
     const passInput = document.getElementById('inputAuthPassword');
     const passIcon = document.getElementById('togglePassIcon');
@@ -111,7 +177,7 @@ async function handleAuthSubmit(e) {
     const username = rawInput.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
     if (!username || username.length < 3) {
-        showToast("Username minimal 3 karakter (huruf/angka/underscore)!");
+        showToast("Username minimal 3 karakter!");
         return;
     }
 
@@ -130,13 +196,11 @@ async function handleAuthSubmit(e) {
         const docSnap = await docRef.get();
 
         if (currentAuthMode === 'register') {
-            // PROSES REGISTRASI AKUN BARU DENGAN PASSWORD
             if (docSnap.exists) {
                 showToast("Username sudah dipakai, pilih username lain!");
                 return;
             }
             
-            // Jika guest sudah membuat data celengan di cache lokal, sinkronkan data tersebut
             if (!savingsData || savingsData.length === 0) {
                 savingsData = [
                     {
@@ -174,7 +238,6 @@ async function handleAuthSubmit(e) {
             });
             showToast(`Akun @${username} berhasil dibuat & disinkronkan! 🎉`);
         } else {
-            // PROSES LOGIN DENGAN VALIDASI PASSWORD
             if (!docSnap.exists) {
                 showToast("Username tidak ditemukan! Silakan klik 'Daftar Baru'");
                 return;
@@ -212,7 +275,6 @@ function handleLogout() {
     localStorage.removeItem('tabungin_username');
     currentUser = '';
     
-    // Kembali ke mode Guest dan muat data cache lokal
     loadStorage();
     updateUserUI();
     showToast("Kamu kembali ke Mode Guest (Tamu)");
@@ -221,23 +283,25 @@ function handleLogout() {
 function updateUserUI() {
     const label = document.getElementById('currentUsernameLabel');
     const loginBtn = document.getElementById('menuLoginBtn');
+    const changePassBtn = document.getElementById('menuChangePassBtn');
     const logoutBtn = document.getElementById('menuLogoutBtn');
 
     if (currentUser) {
         if (label) label.innerText = `@${currentUser}`;
         if (loginBtn) loginBtn.classList.add('hidden');
+        if (changePassBtn) changePassBtn.classList.remove('hidden');
         if (logoutBtn) logoutBtn.classList.remove('hidden');
     } else {
         if (label) label.innerText = '@Guest (Tamu)';
         if (loginBtn) loginBtn.classList.remove('hidden');
+        if (changePassBtn) changePassBtn.classList.add('hidden');
         if (logoutBtn) logoutBtn.classList.add('hidden');
     }
 }
 
-// STORAGE MANAGEMENT (LOCAL CACHE UNTUK GUEST + FIREBASE CLOUD JIKA LOGIN)
+// STORAGE MANAGEMENT
 async function loadStorage() {
     if (currentUser && db) {
-        // MUAT DARI CLOUD FIREBASE JIKA SUDAH LOGIN
         try {
             const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
             const docSnap = await docRef.get();
@@ -252,7 +316,6 @@ async function loadStorage() {
         }
     }
 
-    // JIKA GUEST / BELUM LOGIN: MUAT DARI LOCALSTORAGE CACHE
     const localKey = currentUser ? `celenganku_data_${currentUser}` : `celenganku_data_guest`;
     try {
         const stored = localStorage.getItem(localKey);
@@ -271,14 +334,12 @@ async function loadStorage() {
 async function saveStorage() {
     const localKey = currentUser ? `celenganku_data_${currentUser}` : `celenganku_data_guest`;
 
-    // 1. Selalu Simpan ke Cache Browser Lokal
     try {
         localStorage.setItem(localKey, JSON.stringify(savingsData));
     } catch (err) {
         console.error("Gagal menyimpan ke memori lokal", err);
     }
 
-    // 2. Hanya Simpan ke Cloud Database Firebase jika pengguna SUDAH LOGIN
     if (currentUser && db) {
         try {
             await db.collection(COLLECTION_NAME).doc(currentUser).set({
@@ -297,7 +358,7 @@ function seedSampleData(notify = true) {
     savingsData = [
         {
             id: 'savings-mac-001',
-            title: 'Beli Mac (Contoh)',
+            title: 'tabungan MAC',
             targetAmount: 13500000,
             freqAmount: 50000,
             freqType: 'Perminggu',
@@ -703,7 +764,7 @@ function setPresetImg(key) {
     }
 }
 
-// MODAL CELENGAN (ADD / EDIT)
+// MODAL CELENGAN
 function setFreqType(type) {
     const freqInput = document.getElementById('inputFreqType');
     if (freqInput) freqInput.value = type;
@@ -844,7 +905,7 @@ function handleSaveSavings(e) {
     closeModalSavings();
 }
 
-// MODAL TRANSACTION (CATAT TABUNGAN)
+// MODAL TRANSACTION
 function openModalTransaction() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -947,11 +1008,7 @@ function handleSaveTransaction(e) {
     const pct = calculatePercentage(item);
     if (pct >= 100 && currentTxType === 'deposit') {
         if (typeof confetti === 'function') {
-            confetti({
-                particleCount: 120,
-                spread: 80,
-                origin: { y: 0.6 }
-            });
+            confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         }
         showToast("Selamat! Target tabungan tercapai 🎉");
     } else {
@@ -960,7 +1017,7 @@ function handleSaveTransaction(e) {
     editingTxId = null;
 }
 
-// TRANSACTION DETAIL POPUP (UBAH / HAPUS)
+// TRANSACTION DETAIL POPUP
 function openModalTxDetail(txId) {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -1053,7 +1110,7 @@ function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
-// MODAL ALARM / PENGINGAT
+// MODAL ALARM
 function openModalReminder() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -1137,7 +1194,7 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// TEMA / LIGHT & DARK MODE MANAGEMENT
+// TEMA
 function initTheme() {
     const savedTheme = localStorage.getItem('app_theme') || 'system';
     applyTheme(savedTheme);
