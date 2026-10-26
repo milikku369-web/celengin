@@ -185,17 +185,22 @@ function showView(viewName) {
     document.getElementById('topMenu').classList.add('hidden');
     document.getElementById('sortDropdown').classList.add('hidden');
 
+    const fab = document.getElementById('fabAddSavings');
+
     if (viewName === 'home') {
         currentDetailId = null;
         document.getElementById('view-home').classList.remove('hidden');
         document.getElementById('view-detail').classList.add('hidden');
+        if (fab) fab.classList.remove('hidden'); // Munculkan di halaman utama
         renderHome();
     } else if (viewName === 'detail') {
         document.getElementById('view-home').classList.add('hidden');
         document.getElementById('view-detail').classList.remove('hidden');
+        if (fab) fab.classList.add('hidden'); // Sembunyikan di halaman detail
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 
 // HOME PAGE RENDERING
 function setActiveTab(tab) {
