@@ -341,6 +341,43 @@ function renderHome() {
         emptyState.classList.add('hidden');
     }
 
+function renderHome() {
+    const container = document.getElementById('savingsListContainer');
+    const emptyState = document.getElementById('emptyState');
+    if (!container) return;
+
+    let filtered = savingsData.filter(item => {
+        const pct = calculatePercentage(item);
+        return activeTab === 'tercapai' ? pct >= 100 : pct < 100;
+    });
+
+    filtered.sort((a, b) => {
+        let valA, valB;
+        if (currentSortField === 'nama') {
+            valA = a.title.toLowerCase();
+            valB = b.title.toLowerCase();
+            return currentSortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else if (currentSortField === 'persen') {
+            valA = calculatePercentage(a);
+            valB = calculatePercentage(b);
+        } else if (currentSortField === 'target') {
+            valA = a.targetAmount;
+            valB = b.targetAmount;
+        } else if (currentSortField === 'terkumpul') {
+            valA = calculateTerkumpul(a);
+            valB = calculateTerkumpul(b);
+        }
+        return currentSortOrder === 'asc' ? valA - valB : valB - valA;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = "";
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    } else {
+        if (emptyState) emptyState.classList.add('hidden');
+    }
+
     container.innerHTML = filtered.map(item => {
         const terkumpul = calculateTerkumpul(item);
         const pct = calculatePercentage(item);
@@ -383,6 +420,7 @@ function renderHome() {
         `;
     }).join('');
 }
+
 
 
 // DETAIL PAGE RENDERING
@@ -883,7 +921,7 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// Inisialisasi tema saat halaman pertama kali dimuat
+// INISIALISASI & MANAGEMENT TEMA
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
 });
@@ -892,7 +930,6 @@ function initTheme() {
     const savedTheme = localStorage.getItem('app_theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // Gunakan tema yang tersimpan, atau ikuti preferensi sistem HP/Browser
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
         document.documentElement.classList.add('dark');
         updateThemeIcons(true);
@@ -919,19 +956,5 @@ function updateThemeIcons(isDark) {
     } else {
         moonIcon.classList.remove('hidden');
         sunIcon.classList.add('hidden');
-    }
-}
-
-// FUNGSI TOGGLE DARK/LIGHT MODE
-function toggleDarkMode() {
-    const isDark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
-
-    const moonIcon = document.getElementById('themeMoonIcon');
-    const sunIcon = document.getElementById('themeSunIcon');
-    
-    if (moonIcon && sunIcon) {
-        moonIcon.classList.toggle('hidden', isDark);
-        sunIcon.classList.toggle('hidden', !isDark);
     }
 }
