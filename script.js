@@ -895,12 +895,12 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// TEMA / LIGHT & DARK MODE MANAGEMENT (Terang, Gelap, Ikuti Sistem)
+// TEMA / LIGHT & DARK MODE MANAGEMENT
 function initTheme() {
     const savedTheme = localStorage.getItem('app_theme') || 'system';
     applyTheme(savedTheme);
 
-    // Listener otomatis jika tema bawaan perangkat (HP/PC) berganti
+    // Listener jika tema perangkat (HP/PC) berganti secara otomatis
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
         const currentTheme = localStorage.getItem('app_theme') || 'system';
         if (currentTheme === 'system') {
@@ -924,6 +924,10 @@ function cycleTheme() {
     showToast(`Tema: ${labels[nextTheme]}`);
 }
 
+function toggleDarkMode() {
+    cycleTheme();
+}
+
 function applyTheme(theme) {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
@@ -942,7 +946,6 @@ function updateThemeUI(theme) {
     const moonIcon = document.getElementById('themeMoonIcon');
     const sunIcon = document.getElementById('themeSunIcon');
 
-    // Jika HTML menggunakan tombol dengan id="themeIcon"
     if (iconElem) {
         if (theme === 'system') {
             iconElem.className = 'fa-solid fa-desktop text-sm';
@@ -953,7 +956,6 @@ function updateThemeUI(theme) {
         }
     }
 
-    // Fallback jika HTML masih menggunakan dua ikon terpisah (themeMoonIcon & themeSunIcon)
     if (moonIcon && sunIcon) {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
