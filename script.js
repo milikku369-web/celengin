@@ -817,28 +817,41 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// Inisialisasi tema saat script dimuat
-(function initTheme() {
+// Inisialisasi tema saat halaman pertama kali dimuat
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+});
+
+function initTheme() {
     const savedTheme = localStorage.getItem('app_theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
+    // Gunakan tema yang tersimpan, atau ikuti preferensi sistem HP/Browser
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
         document.documentElement.classList.add('dark');
+        updateThemeIcons(true);
     } else {
         document.documentElement.classList.remove('dark');
+        updateThemeIcons(false);
     }
-})();
+}
 
-// Fungsi Toggle Global
-window.toggleDarkMode = function() {
+function toggleDarkMode() {
     const isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
-    
-    // Update ikon jika ada
+    updateThemeIcons(isDark);
+}
+
+function updateThemeIcons(isDark) {
     const moonIcon = document.getElementById('themeMoonIcon');
     const sunIcon = document.getElementById('themeSunIcon');
-    if (moonIcon && sunIcon) {
-        moonIcon.classList.toggle('hidden', isDark);
-        sunIcon.classList.toggle('hidden', !isDark);
+    if (!moonIcon || !sunIcon) return;
+
+    if (isDark) {
+        moonIcon.classList.add('hidden');
+        sunIcon.classList.remove('hidden');
+    } else {
+        moonIcon.classList.remove('hidden');
+        sunIcon.classList.add('hidden');
     }
-};
+}
