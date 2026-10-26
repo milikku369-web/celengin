@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celenganku - App Tabungan Digital</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0d0d0f',
+                        cardBg: '#181820',
+                        cardBorder: '#282836',
+                        inputBg: '#1e1e28',
+                        accentBlue: '#3b82f6',
+                        accentBlueHover: '#2563eb',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Custom CSS External -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#0d0d0f] text-gray-100 min-h-screen flex flex-col">
+
+    <!-- Top Global Navbar (Desktop & Mobile) -->
+    <header class="w-full bg-[#121218]/90 backdrop-blur-md border-b border-gray-800/80 sticky top-0 z-30">
+        <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showView('home')">
+                <div class="w-10 h-10 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold text-xl shadow-lg shadow-blue-500/10">
+                    <i class="fa-solid fa-piggy-bank"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        Celenganku
+                        <span class="text-[10px] bg-blue-600/30 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded-full font-medium hidden sm:inline-block">Web App</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-3">
+                <button onclick="openModalAddSavings()" class="hidden sm:flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Tambah Celengan</span>
+                </button>
+
+                <div class="relative">
+                    <button onclick="toggleTopMenu()" class="p-2.5 text-gray-400 hover:text-white bg-[#1a1a24] border border-gray-800 hover:border-gray-700 rounded-xl transition">
+                        <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                    </button>
+                    <!-- Top Dropdown Menu -->
+                    <div id="topMenu" class="hidden absolute right-0 mt-2 w-52 bg-[#1c1c26] border border-gray-700/80 rounded-2xl shadow-2xl z-40 py-2 text-xs text-gray-200">
+                        <button onclick="seedSampleData()" class="w-full text-left px-4 py-2.5 hover:bg-[#282836] flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-rotate-left text-blue-400"></i> Reset Data Contoh
+                        </button>
+                        <button onclick="clearAllData()" class="w-full text-left px-4 py-2.5 hover:bg-[#282836] text-rose-400 flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-trash-can"></i> Hapus Semua Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container Shell -->
+    <main class="flex-1 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+
+        <!-- ==================== VIEW 1: HOME PAGE ==================== -->
+        <div id="view-home" class="flex-1 flex flex-col space-y-6 animate-fade-in">
+
+            <!-- Controls & Filters Bar (Tabs + Sorting) -->
+            <div class="bg-[#15151e] border border-gray-800/80 rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+                <!-- Tabs Nav (Berlangsung / Tercapai) -->
+                <div class="flex bg-[#1d1d28] p-1 rounded-xl border border-gray-800/80 w-full md:w-auto">
+                    <button onclick="setActiveTab('berlangsung')" id="tab-berlangsung" class="flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-400 bg-[#282838] shadow transition">
+                        Berlangsung
+                    </button>
+                    <button onclick="setActiveTab('tercapai')" id="tab-tercapai" class="flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-200 transition">
+                        Tercapai
+                    </button>
+                </div>
+
+                <!-- Sort & Order Controls -->
+                <div class="flex items-center gap-2.5 w-full md:w-auto">
+                    <!-- Dropdown Sort Field -->
+                    <div class="relative flex-1 md:w-48">
+                        <button onclick="toggleSortDropdown()" class="w-full bg-[#1c1c26] border border-gray-700/80 hover:border-gray-600 rounded-xl px-3.5 py-2 text-xs font-medium text-gray-200 flex items-center justify-between transition">
+                            <div class="flex items-center gap-2 truncate">
+                                <i class="fa-solid fa-bars-staggered text-blue-400"></i>
+                                <span id="currentSortLabel">Nama Tabungan</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-gray-400 text-[10px]"></i>
+                        </button>
+                        <div id="sortDropdown" class="hidden absolute left-0 right-0 mt-1 bg-[#1c1c26] border border-gray-700/80 rounded-xl shadow-2xl z-30 py-1 text-xs text-gray-200">
+                            <button onclick="setSortField('nama', 'Nama Tabungan')" class="w-full text-left px-3.5 py-2 hover:bg-[#282838]">Nama Tabungan</button>
+                            <button onclick="setSortField('persen', 'Persentase')" class="w-full text-left px-3.5 py-2 hover:bg-[#282838]">Persentase</button>
+                            <button onclick="setSortField('target', 'Nilai Target')" class="w-full text-left px-3.5 py-2 hover:bg-[#282838]">Nilai Target</button>
+                            <button onclick="setSortField('terkumpul', 'Terkumpul')" class="w-full text-left px-3.5 py-2 hover:bg-[#282838]">Terkumpul</button>
+                        </div>
+                    </div>
+
+                    <!-- Sort Order Toggle -->
+                    <button onclick="toggleSortOrder()" id="btnSortOrder" class="bg-[#1c1c26] border border-gray-700/80 hover:border-gray-600 rounded-xl px-3.5 py-2 text-xs font-medium text-gray-200 flex items-center gap-2 transition flex-shrink-0">
+                        <i id="sortOrderIcon" class="fa-solid fa-arrow-up text-blue-400"></i>
+                        <span id="sortOrderLabel" class="hidden sm:inline">Meningkat</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Savings Multi-Column Grid -->
+            <div id="savingsListContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Dynamic Savings Cards Rendered Here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex-1 flex flex-col items-center justify-center p-12 text-center my-auto min-h-[350px]">
+                <div class="w-20 h-20 rounded-3xl bg-[#1a1a24] border border-gray-800 flex items-center justify-center text-gray-500 mb-4 text-3xl">
+                    <i class="fa-solid fa-piggy-bank"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-300">Belum Ada Celengan</h3>
+                <p class="text-xs text-gray-500 mt-1.5 max-w-sm">Tekan tombol '+ Tambah Celengan' untuk mulai menyisihkan tabungan impianmu.</p>
+                <button onclick="openModalAddSavings()" class="mt-5 bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition">
+                    + Tambah Celengan Baru
+                </button>
+            </div>
+
+            <!-- Mobile Floating Action Button (FAB) -->
+            <div class="fixed bottom-6 right-6 sm:hidden z-20">
+                <button onclick="openModalAddSavings()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold p-4 rounded-full shadow-2xl shadow-blue-600/50 flex items-center justify-center text-xl transition transform active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+        </div>
+
+
+        <!-- ==================== VIEW 2: SAVINGS DETAIL PAGE ==================== -->
+        <div id="view-detail" class="hidden flex-1 flex flex-col space-y-6 animate-fade-in">
+            <!-- Detail Header Bar -->
+            <div class="bg-[#15151e] border border-gray-800/80 rounded-2xl p-4 flex items-center justify-between shadow-xl">
+                <div class="flex items-center gap-3">
+                    <button onclick="showView('home')" class="text-gray-400 hover:text-white bg-[#1d1d28] border border-gray-800 p-2 rounded-xl transition">
+                        <i class="fa-solid fa-chevron-left text-base"></i>
+                    </button>
+                    <div>
+                        <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Detail Celengan</span>
+                        <h2 id="detailHeaderTitle" class="text-lg font-bold text-white truncate max-w-[200px] sm:max-w-md">Detail Tabungan</h2>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="openModalEditSavings()" class="bg-[#1d1d28] border border-gray-800 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition">
+                        <i class="fa-solid fa-pencil"></i>
+                        <span class="hidden sm:inline">Edit</span>
+                    </button>
+                    <button onclick="confirmDeleteSavings()" class="bg-[#1d1d28] border border-gray-800 hover:border-rose-500/50 text-rose-400 hover:text-rose-300 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span class="hidden sm:inline">Hapus</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Responsive 2-Column Detail Layout for Laptop/PC -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- LEFT COLUMN: Image Banner, Progress & Statistics -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- Banner Image -->
+                    <div class="w-full h-60 sm:h-72 rounded-3xl overflow-hidden bg-[#181820] border border-gray-800/80 flex items-center justify-center relative shadow-lg">
+                        <img id="detailImg" src="" alt="Product" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/22222a/94a3b8?text=Impian+Kamu';">
+                    </div>
+
+                    <!-- Target & Progress Ring Card -->
+                    <div class="bg-[#181820] border border-gray-800/80 rounded-3xl p-6 shadow-xl">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Target Tabungan</p>
+                                <h3 id="detailTargetAmount" class="text-2xl sm:text-3xl font-extrabold text-white mt-0.5">Rp 0</h3>
+                                <p id="detailFrequency" class="text-xs text-gray-400 mt-1 font-medium">Rp 0 Perminggu</p>
+                            </div>
+                            <!-- Circular Progress SVG -->
+                            <div class="relative w-20 h-20 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-20 h-20 transform -rotate-90">
+                                    <circle cx="40" cy="40" r="32" stroke="#282836" stroke-width="6" fill="transparent" />
+                                    <circle id="detailCircleProgress" cx="40" cy="40" r="32" stroke="#3b82f6" stroke-width="6" stroke-dasharray="201.06" stroke-dashoffset="201.06" stroke-linecap="round" fill="transparent" class="transition-all duration-700 ease-out" />
+                                </svg>
+                                <span id="detailPercentText" class="absolute text-sm font-bold text-white">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-800/80 mt-5 pt-4 grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <p class="text-gray-400">Tanggal Dibuat</p>
+                                <p id="detailCreatedDate" class="text-gray-200 font-semibold mt-0.5">-</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-gray-400">Estimasi Kebutuhan</p>
+                                <p id="detailEstimasi" class="text-blue-400 font-semibold mt-0.5">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terkumpul & Kekurangan Card -->
+                    <div class="bg-[#181820] border border-gray-800/80 rounded-3xl p-6 shadow-xl grid grid-cols-2 gap-4">
+                        <div class="text-center border-r border-gray-800/80 pr-2">
+                            <p class="text-xs font-medium text-gray-400 mb-1">Terkumpul</p>
+                            <p id="detailTerkumpul" class="text-lg sm:text-xl font-bold text-emerald-400">Rp 0</p>
+                        </div>
+                        <div class="text-center pl-2">
+                            <p class="text-xs font-medium text-gray-400 mb-1">Kekurangan</p>
+                            <p id="detailKekurangan" class="text-lg sm:text-xl font-bold text-rose-400">Rp 0</p>
+                        </div>
+                    </div>
+
+                    <!-- Custom Alarm / Reminder Toggle Card -->
+                    <div class="bg-[#181820] border border-gray-800/80 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-gray-700 transition shadow-lg" onclick="openModalReminder()">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-11 h-11 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                                <i class="fa-solid fa-bell text-lg"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p id="detailReminderTime" class="text-base font-bold text-white">12:00</p>
+                                    <i class="fa-solid fa-chevron-right text-[10px] text-gray-500"></i>
+                                </div>
+                                <p id="detailReminderFreq" class="text-xs text-gray-400">Setiap Minggu</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="toggleReminder" onchange="toggleReminderState(this.checked)" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Transaction History & Record Button -->
+                <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+                    <div class="bg-[#181820] border border-gray-800/80 rounded-3xl p-6 shadow-xl space-y-4">
+                        <div class="flex items-center justify-between border-b border-gray-800/80 pb-3">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-receipt text-blue-400"></i>
+                                <h3 class="text-sm font-bold text-white">Riwayat Tabungan</h3>
+                            </div>
+                            <span id="detailHistoryCount" class="text-xs font-semibold text-gray-400 bg-[#22222e] px-2.5 py-1 rounded-full border border-gray-800">0 Transaksi</span>
+                        </div>
+
+                        <!-- Action Button to Record Deposit/Withdrawal -->
+                        <button onclick="openModalTransaction()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-2xl shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 text-xs transition active:scale-95">
+                            <i class="fa-solid fa-plus-minus"></i>
+                            <span>Catat Tabungan Baru</span>
+                        </button>
+
+                        <!-- Dynamic Transaction History Items -->
+                        <div id="detailHistoryContainer" class="space-y-2.5 max-h-[450px] overflow-y-auto pr-1">
+                            <!-- Dynamic History Rows -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+
+    <!-- ==================== MODAL 1: ADD / EDIT CELENGAN ==================== -->
+    <div id="modalSavings" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#1c1c26] border border-gray-700/80 w-full max-w-md rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-200 max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-700/60 mb-4">
+                <h3 id="modalSavingsTitle" class="text-base font-bold text-white">Tambah Celengan</h3>
+                <button onclick="closeModalSavings()" class="text-gray-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="formSavings" onsubmit="handleSaveSavings(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="inputSavingsId">
+
+                <!-- Nama Tabungan -->
+                <div class="relative">
+                    <div class="flex items-center bg-[#14141c] border border-gray-700 rounded-xl px-3.5 py-3">
+                        <i class="fa-solid fa-bars text-gray-400 mr-2.5 text-sm"></i>
+                        <input type="text" id="inputTitle" placeholder="Nama Tabungan" required class="w-full bg-transparent text-white text-xs focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Target Tabungan with Real-time Dots & Clear X -->
+                <div class="relative">
+                    <label class="absolute -top-2 left-3 bg-[#1c1c26] px-1 text-[10px] text-blue-400 font-semibold z-10">Target Tabungan</label>
+                    <div class="flex items-center bg-[#14141c] border border-blue-500/80 rounded-xl px-3.5 py-3 mt-1 relative">
+                        <i class="fa-solid fa-money-bill-wave text-gray-400 mr-2.5 text-sm"></i>
+                        <input type="text" id="inputTargetAmount" inputmode="numeric" placeholder="50.000" oninput="handleFormattedInput(this)" required class="w-full bg-transparent text-white font-bold text-sm focus:outline-none pr-6">
+                        <button type="button" onclick="clearInput('inputTargetAmount')" class="text-gray-500 hover:text-gray-300 absolute right-3">
+                            <i class="fa-solid fa-circle-xmark text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mata Uang Selector Dropdown -->
+                <div class="relative">
+                    <label class="absolute -top-2 left-3 bg-[#1c1c26] px-1 text-[10px] text-gray-400 font-medium z-10">Mata Uang</label>
+                    <div class="flex items-center bg-[#14141c] border border-gray-700 rounded-xl px-3.5 py-3 mt-1">
+                        <span id="currencyFlag" class="mr-2 text-base">🇮🇩</span>
+                        <select id="inputCurrency" onchange="handleCurrencyChange(this.value)" class="w-full bg-transparent text-white font-medium text-xs focus:outline-none cursor-pointer">
+                            <option value="IDR|Rp|🇮🇩">Indonesia Rupiah ( Rp )</option>
+                            <option value="USD|$|🇺🇸">US Dollar ( $ )</option>
+                            <option value="EUR|€|🇪🇺">Euro ( € )</option>
+                            <option value="JPY|¥|🇯🇵">Japanese Yen ( ¥ )</option>
+                            <option value="SGD|S$|🇸🇬">Singapore Dollar ( S$ )</option>
+                            <option value="MYR|RM|🇲🇾">Ringgit Malaysia ( RM )</option>
+                            <option value="KRW|₩|🇰🇷">Korean Won ( ₩ )</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Rencana Pengisian (Harian / Mingguan / Bulanan) -->
+                <div>
+                    <label class="block text-gray-400 font-medium mb-1.5">Rencana Pengisian</label>
+                    <div class="bg-[#14141c] p-1 rounded-xl flex border border-gray-700/80 mb-2">
+                        <button type="button" id="btnFreqHarian" onclick="setFreqType('Perhari')" class="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition">Harian</button>
+                        <button type="button" id="btnFreqMingguan" onclick="setFreqType('Perminggu')" class="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-[#2a2a38] text-white shadow transition">Mingguan</button>
+                        <button type="button" id="btnFreqBulanan" onclick="setFreqType('Perbulan')" class="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition">Bulanan</button>
+                    </div>
+                    <input type="hidden" id="inputFreqType" value="Perminggu">
+
+                    <div class="relative">
+                        <div class="flex items-center bg-[#14141c] border border-gray-700 rounded-xl px-3.5 py-3 relative">
+                            <i class="fa-solid fa-calculator text-gray-400 mr-2.5 text-sm"></i>
+                            <input type="text" id="inputFreqAmount" inputmode="numeric" placeholder="Nominal Pengisian" oninput="handleFormattedInput(this)" required class="w-full bg-transparent text-white font-medium text-xs focus:outline-none pr-6">
+                            <button type="button" onclick="clearInput('inputFreqAmount')" class="text-gray-500 hover:text-gray-300 absolute right-3">
+                                <i class="fa-solid fa-circle-xmark text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Image Upload Section -->
+                <div class="space-y-2 pt-2 border-t border-gray-700/60">
+                    <label class="block text-gray-300 font-semibold">Foto Sampul Impian</label>
+
+                    <div class="relative w-full h-36 rounded-2xl overflow-hidden bg-[#14141c] border border-gray-700/80 flex items-center justify-center">
+                        <img id="modalImgPreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                        <div id="modalImgPlaceholder" class="flex flex-col items-center justify-center text-gray-500 p-3 text-center">
+                            <i class="fa-solid fa-image text-2xl mb-1 text-gray-400"></i>
+                            <span class="text-[11px]">Upload foto dari HP / PC / masukkan URL</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-400 font-medium mb-1">Upload dari Galeri</label>
+                        <input type="file" id="inputFileImage" accept="image/*" onchange="handleFileSelect(event)" class="w-full bg-[#14141c] border border-gray-700 rounded-xl px-3 py-1.5 text-gray-300 text-xs file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-400 font-medium mb-1">Atau Gunakan URL Gambar Web</label>
+                        <input type="url" id="inputImage" placeholder="https://..." oninput="updateLivePreview(this.value)" class="w-full bg-[#14141c] border border-gray-700 rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-400 font-medium mb-1">Atau Pilih Preset Gambar</label>
+                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                            <button type="button" onclick="setPresetImg('mac')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">Laptop/Mac</button>
+                            <button type="button" onclick="setPresetImg('iphone')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">iPhone</button>
+                            <button type="button" onclick="setPresetImg('motor')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">Motor</button>
+                            <button type="button" onclick="setPresetImg('sepatu')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">Sepatu</button>
+                            <button type="button" onclick="setPresetImg('konser')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">Konser</button>
+                            <button type="button" onclick="setPresetImg('mobil')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">Mobil</button>
+                            <button type="button" onclick="setPresetImg('rumah')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">Rumah</button>
+                            <button type="button" onclick="setPresetImg('kamera')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">Kamera</button>
+                            <button type="button" onclick="setPresetImg('liburan')" class="px-2.5 py-1 bg-[#282836] hover:bg-blue-600 rounded-lg text-[10px] flex-shrink-0 transition">Liburan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalSavings()" class="px-4 py-2.5 bg-transparent hover:bg-gray-800 text-gray-300 font-medium rounded-xl">Batal</button>
+                    <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl shadow-md">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== MODAL 2: CATAT TABUNGAN (DEPOSIT/WITHDRAWAL) ==================== -->
+    <div id="modalTransaction" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#1c1c26] border border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-200">
+            <h3 id="modalTxTitle" class="text-center font-bold text-base text-white mb-4">Catat Tabungan</h3>
+
+            <!-- Segmented Control (+ Tambah / - Kurangi) -->
+            <div class="bg-[#14141c] p-1 rounded-2xl flex border border-gray-700/60 mb-4">
+                <button type="button" id="btnTypeDeposit" onclick="setTransactionType('deposit')" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-[#2a3040] text-white shadow transition">
+                    + Tambah
+                </button>
+                <button type="button" id="btnTypeWithdraw" onclick="setTransactionType('withdraw')" class="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white transition">
+                    – Kurangi
+                </button>
+            </div>
+
+            <form id="formTransaction" onsubmit="handleSaveTransaction(event)" class="space-y-4 text-xs">
+                <!-- Nominal Input with Real-time Dots -->
+                <div class="relative">
+                    <label class="absolute -top-2 left-3 bg-[#1c1c26] px-1 text-[10px] text-blue-400 font-semibold z-10">Nominal</label>
+                    <div class="flex items-center bg-[#14141c] border border-blue-500/80 rounded-xl px-3.5 py-3 mt-1 relative">
+                        <i class="fa-solid fa-money-bill-wave text-gray-400 mr-2.5 text-sm"></i>
+                        <input type="text" id="inputTxAmount" inputmode="numeric" placeholder="0" oninput="handleFormattedInput(this)" required class="w-full bg-transparent text-white font-bold text-sm focus:outline-none pr-6">
+                        <button type="button" onclick="clearInput('inputTxAmount')" class="text-gray-500 hover:text-gray-300 absolute right-3">
+                            <i class="fa-solid fa-circle-xmark text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Preset Chips -->
+                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                    <button type="button" onclick="setTxChipAmount(50000)" class="px-3 py-1.5 bg-[#282836] hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-200 border border-gray-700 flex-shrink-0">
+                        50.000
+                    </button>
+                    <button type="button" id="chipPeriodic" onclick="setTxChipAmount(0)" class="px-3 py-1.5 bg-[#282836] hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-200 border border-gray-700 flex-shrink-0">
+                        Target Periode
+                    </button>
+                    <button type="button" id="chipRemaining" onclick="setTxChipAmount(0)" class="px-3 py-1.5 bg-[#282836] hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-200 border border-gray-700 flex-shrink-0">
+                        Sisa Kekurangan
+                    </button>
+                </div>
+
+                <!-- Keterangan Input -->
+                <div class="relative">
+                    <div class="flex items-center bg-[#14141c] border border-gray-700 rounded-xl px-3.5 py-3">
+                        <i class="fa-solid fa-equals text-gray-400 mr-2.5 text-sm"></i>
+                        <input type="text" id="inputTxNote" placeholder="Keterangan (opsional)" class="w-full bg-transparent text-white text-xs focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="pt-3 flex items-center justify-between">
+                    <button type="button" onclick="closeModalTransaction()" class="px-5 py-2.5 text-blue-400 hover:text-blue-300 font-semibold text-xs">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-2xl shadow-md text-xs">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== MODAL 3: TRANSACTION DETAIL POPUP (UBAH / HAPUS) ==================== -->
+    <div id="modalTxDetail" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#1c1c26] border border-gray-700/80 w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-200 relative">
+            <button onclick="closeModalTxDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="text-center pt-2 pb-1">
+                <h2 id="txDetailAmount" class="text-3xl font-extrabold text-emerald-400 tracking-tight">+ 2.200.000</h2>
+                <p id="txDetailDate" class="text-xs text-gray-400 mt-2">18 Okt 2026 • 12:03</p>
+                <p id="txDetailNote" class="text-xs text-gray-300 mt-1 italic hidden"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-6">
+                <button onclick="handleEditTxFromModal()" class="py-2.5 px-3 bg-[#242a38] hover:bg-[#30384a] text-blue-400 border border-blue-500/40 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
+                    <i class="fa-solid fa-pencil text-sm"></i>
+                    <span>Ubah</span>
+                </button>
+                <button onclick="handleDeleteTxFromModal()" class="py-2.5 px-3 bg-[#38222a] hover:bg-[#4a2b38] text-rose-400 border border-rose-500/40 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                    <span>Hapus</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== MODAL 4: CONFIRM DELETE CELENGAN ==================== -->
+    <div id="modalConfirmDelete" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#1c1c26] border border-gray-700/80 w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-in text-center text-gray-200">
+            <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 class="font-bold text-white text-sm mb-1">Hapus Celengan?</h3>
+            <p class="text-xs text-gray-400 mb-5">Apakah Anda yakin ingin menghapus celengan ini? Semua riwayat transaksi akan hilang.</p>
+            <div class="flex items-center gap-2">
+                <button onclick="closeConfirmDelete()" class="flex-1 py-2.5 bg-[#282836] hover:bg-gray-700 text-gray-300 rounded-xl text-xs font-semibold">Batal</button>
+                <button onclick="executeDeleteSavings()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-md">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== MODAL 5: CUSTOM PENGINGAT / ALARM ==================== -->
+    <div id="modalReminder" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#1c1c26] border border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-200">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-700/60 mb-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-bell text-blue-400"></i>
+                    <h3 class="text-base font-bold text-white">Pengaturan Pengingat</h3>
+                </div>
+                <button onclick="closeModalReminder()" class="text-gray-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="formReminder" onsubmit="handleSaveReminder(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-gray-400 font-medium mb-1">Waktu Pengingat (Jam)</label>
+                    <div class="flex items-center bg-[#14141c] border border-gray-700 rounded-xl px-3.5 py-2.5 text-white">
+                        <i class="fa-regular fa-clock text-blue-400 mr-2.5 text-base"></i>
+                        <input type="time" id="inputReminderTime" required class="w-full bg-transparent text-white font-bold text-base focus:outline-none [color-scheme:dark]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 font-medium mb-1">Frekuensi Hari</label>
+                    <select id="inputReminderFreq" class="w-full bg-[#14141c] border border-gray-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500">
+                        <option value="Setiap Hari">Setiap Hari</option>
+                        <option value="Setiap Minggu">Setiap Minggu</option>
+                        <option value="Hari Kerja (Senin - Jumat)">Hari Kerja (Senin - Jumat)</option>
+                        <option value="Akhir Pekan (Sabtu - Minggu)">Akhir Pekan (Sabtu - Minggu)</option>
+                        <option value="Setiap Bulan">Setiap Bulan</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-between bg-[#14141c] p-3.5 rounded-xl border border-gray-700/60">
+                    <span class="text-gray-300 font-medium">Aktifkan Pengingat</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="inputReminderActive" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalReminder()" class="px-4 py-2.5 bg-transparent hover:bg-gray-800 text-gray-300 font-medium rounded-xl">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl shadow-md">Simpan Pengingat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== TOAST NOTIFICATION ==================== -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#1e1e2a] border border-gray-700 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2.5 transition-all duration-300 opacity-0 pointer-events-none">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-blue-400 text-base"></i>
+        <span id="toastMsg">Pesan Notifikasi</span>
+    </div>
+
+    <!-- External Script JS -->
+    <script src="script.js"></script>
+</body>
+</html>
