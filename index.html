@@ -79,10 +79,15 @@
                                 <i class="fa-solid fa-user"></i>
                             </div>
                             <div class="truncate">
-                                <p class="text-[10px] text-gray-400 font-medium">Akun Aktif</p>
-                                <p id="currentUsernameLabel" class="font-bold text-blue-600 dark:text-blue-400 truncate">@Guest</p>
+                                <p class="text-[10px] text-gray-400 font-medium">Status Akun</p>
+                                <p id="currentUsernameLabel" class="font-bold text-blue-600 dark:text-blue-400 truncate">@Guest (Tamu)</p>
                             </div>
                         </div>
+
+                        <!-- TOMBOL MASUK / DAFTAR (Muncul jika belum login) -->
+                        <button id="menuLoginBtn" onclick="openModalUsername()" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
+                            <i class="fa-solid fa-right-to-bracket"></i> Masuk / Daftar Akun
+                        </button>
 
                         <!-- Menu Pengaturan Tema -->
                         <button onclick="cycleTheme()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282836] flex items-center justify-between gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
@@ -103,8 +108,8 @@
                             <i class="fa-solid fa-trash-can"></i> Hapus Semua Data
                         </button>
 
-                        <!-- TOMBOL LOGOUT (KELUAR) -->
-                        <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-500 font-medium flex items-center gap-2.5 transition">
+                        <!-- TOMBOL LOGOUT (Sembunyi jika mode guest) -->
+                        <button id="menuLogoutBtn" onclick="handleLogout()" class="hidden w-full text-left px-4 py-2.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-500 font-medium flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-right-from-bracket"></i> Keluar (Logout)
                         </button>
                     </div>
@@ -568,9 +573,15 @@
         </div>
     </div>
 
-        <!-- ==================== MODAL 6: LOGIN & REGISTER DENGAN PASSWORD ==================== -->
+    <!-- ==================== MODAL 6: LOGIN & REGISTER DENGAN PASSWORD ==================== -->
     <div id="modalUsername" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 text-center">
+        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 text-center relative">
+            
+            <!-- Tombol Tutup Modal Login -->
+            <button onclick="closeModalUsername()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
             <div class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-500 dark:text-blue-400 mx-auto mb-3 text-2xl">
                 <i class="fa-solid fa-user-lock"></i>
             </div>
