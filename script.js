@@ -15,7 +15,6 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 }
 const db = (typeof firebase !== 'undefined' && firebase.firestore) ? firebase.firestore() : null;
 const COLLECTION_NAME = "user_savings";
-const USER_DOC_ID = "my_savings_data";
 
 // PRESET IMAGES
 const PRESET_IMAGES = {
@@ -30,7 +29,7 @@ const PRESET_IMAGES = {
     liburan: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80'
 };
 
-// GLOBAL APP STATE
+// GLOBAL APP STATE & USER AUTH STATE
 let savingsData = [];
 let currentDetailId = null;
 let activeTab = 'berlangsung'; // 'berlangsung' | 'tercapai'
@@ -40,21 +39,157 @@ let currentTxType = 'deposit'; // 'deposit' | 'withdraw'
 let editingTxId = null;
 let selectedTxIdForModal = null;
 
+// USER MANAGEMENT STATE
+let currentUser = localStorage.getItem('tabungin_username') || '';
+let currentAuthMode = 'login'; // 'login' | 'register'
+
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
-    await loadStorage();
-    renderHome();
+    if (!currentUser) {
+        openModalUsername();
+    } else {
+        updateUserUI();
+        await loadStorage();
+    }
 });
 
-// STORAGE MANAGEMENT (LOCAL + CLOUD FIREBASE)
+// AUTHENTICATION & USER MANAGEMENT
+function openModalUsername() {
+    switchAuthMode('login');
+    document.getElementById('modalUsername')?.classList.remove('hidden');
+}
+
+function switchAuthMode(mode) {
+    currentAuthMode = mode;
+    const tabLogin = document.getElementById('tabAuthLogin');
+    const tabRegister = document.getElementById('tabAuthRegister');
+    const title = document.getElementById('authTitle');
+    const subtitle = document.getElementById('authSubtitle');
+    const btn = document.getElementById('btnAuthSubmit');
+    
+    const activeClass = "flex-1 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#282838] text-blue-600 dark:text-white shadow transition";
+    const inactiveClass = "flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition";
+
+    if (mode === 'login') {
+        if (tabLogin) tabLogin.className = activeClass;
+        if (tabRegister) tabRegister.className = inactiveClass;
+        if (title) title.innerText = "Masuk ke TABUNGin";
+        if (subtitle) subtitle.innerText = "Masukkan username akunmu yang sudah terdaftar.";
+        if (btn) btn.innerText = "Masuk ke Akun";
+    } else {
+        if (tabRegister) tabRegister.className = activeClass;
+        if (tabLogin) tabLogin.className = inactiveClass;
+        if (title) title.innerText = "Buat Akun Baru";
+        if (subtitle) subtitle.innerText = "Buat username baru untuk mulai menabung di cloud.";
+        if (btn) btn.innerText = "Daftar Akun Baru";
+    }
+}
+
+async function handleAuthSubmit(e) {
+    if (e) e.preventDefault();
+    const rawInput = document.getElementById('inputAuthUsername')?.value || "";
+    const username = rawInput.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+    if (!username || username.length < 3) {
+        showToast("Username minimal 3 karakter (huruf/angka/underscore)!");
+        return;
+    }
+
+    if (!db) {
+        showToast("Koneksi database Firebase belum siap!");
+        return;
+    }
+
+    try {
+        const docRef = db.collection(COLLECTION_NAME).doc(username);
+        const docSnap = await docRef.get();
+
+        if (currentAuthMode === 'register') {
+            // PROSES REGISTRASI AKUN BARU
+            if (docSnap.exists) {
+                showToast("Username sudah dipakai, pilih username lain!");
+                return;
+            }
+            // Buat akun baru dengan data contoh awal
+            savingsData = [
+                {
+                    id: 'savings-mac-001',
+                    title: 'tabungan MAC',
+                    targetAmount: 13500000,
+                    freqAmount: 50000,
+                    freqType: 'Perminggu',
+                    currencySymbol: 'Rp',
+                    currencyFlag: '🇮🇩',
+                    currencyCode: 'IDR',
+                    imageUrl: PRESET_IMAGES.mac,
+                    createdDate: formatDateOnlyNow(),
+                    reminderTime: '12:00',
+                    reminderFreq: 'Setiap Minggu',
+                    reminderEnabled: false,
+                    history: [
+                        {
+                            id: 'tx-001',
+                            type: 'deposit',
+                            amount: 2200000,
+                            dateStr: formatDateNow(),
+                            note: 'Setoran awal tabungan Mac'
+                        }
+                    ]
+                }
+            ];
+            await docRef.set({
+                username: username,
+                items: savingsData,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast(`Akun @${username} berhasil dibuat! 🎉`);
+        } else {
+            // PROSES LOGIN AKUN LAMA
+            if (!docSnap.exists) {
+                showToast("Username tidak ditemukan! Silakan klik 'Daftar Baru'");
+                return;
+            }
+            savingsData = docSnap.data().items || [];
+            showToast(`Selamat datang kembali, @${username}!`);
+        }
+
+        currentUser = username;
+        localStorage.setItem('tabungin_username', currentUser);
+        document.getElementById('modalUsername')?.classList.add('hidden');
+
+        updateUserUI();
+        renderHome();
+    } catch (err) {
+        console.error("Gagal autentikasi:", err);
+        showToast("Gagal terhubung ke server database!");
+    }
+}
+
+function handleLogout() {
+    document.getElementById('topMenu')?.classList.add('hidden');
+    localStorage.removeItem('tabungin_username');
+    currentUser = '';
+    savingsData = [];
+    updateUserUI();
+    renderHome();
+    showToast("Kamu berhasil keluar!");
+    openModalUsername();
+}
+
+function updateUserUI() {
+    const label = document.getElementById('currentUsernameLabel');
+    if (label) label.innerText = currentUser ? `@${currentUser}` : 'Guest';
+}
+
+// STORAGE MANAGEMENT (LOCAL + CLOUD FIREBASE PER USER)
 async function loadStorage() {
+    if (!currentUser) return;
     let loadedFromCloud = false;
 
-    // Coba muat data dari Firebase Firestore terlebih dahulu
     if (db) {
         try {
-            const docRef = db.collection(COLLECTION_NAME).doc(USER_DOC_ID);
+            const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
             const docSnap = await docRef.get();
 
             if (docSnap.exists && Array.isArray(docSnap.data().items)) {
@@ -66,41 +201,44 @@ async function loadStorage() {
         }
     }
 
-    // Jika cloud tidak ada data/offline, gunakan LocalStorage
     if (!loadedFromCloud) {
         try {
-            const stored = localStorage.getItem('celenganku_app_data');
+            const stored = localStorage.getItem(`celenganku_data_${currentUser}`);
             if (stored) {
                 savingsData = JSON.parse(stored);
+            } else {
+                savingsData = [];
+                seedSampleData(false);
             }
         } catch (err) {
-            console.error("Gagal memuat dari memori lokal", err);
+            savingsData = [];
         }
     }
 
-    if (!savingsData || !Array.isArray(savingsData) || savingsData.length === 0) {
-        seedSampleData(false);
-    }
+    renderHome();
 }
 
 async function saveStorage() {
-    // 1. Simpan ke LocalStorage HP
+    if (!currentUser) return;
+
+    // 1. Simpan di LocalStorage HP sesuai username
     try {
-        localStorage.setItem('celenganku_app_data', JSON.stringify(savingsData));
+        localStorage.setItem(`celenganku_data_${currentUser}`, JSON.stringify(savingsData));
     } catch (err) {
         console.error("Gagal menyimpan ke memori lokal", err);
     }
 
-    // 2. Sinkronkan secara online ke Firebase Firestore
+    // 2. Simpan di Cloud Firebase Firestore sesuai doc(currentUser)
     if (db) {
         try {
-            await db.collection(COLLECTION_NAME).doc(USER_DOC_ID).set({
+            await db.collection(COLLECTION_NAME).doc(currentUser).set({
+                username: currentUser,
                 items: savingsData,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            }, { merge: true });
         } catch (err) {
             console.error("Gagal menyinkronkan ke cloud:", err);
-            showToast("Gagal menyimpan ke cloud!");
+            showToast("Gagal menyinkronkan ke cloud!");
         }
     }
 }
@@ -301,7 +439,9 @@ function renderHome() {
     if (!container) return;
 
     if (!savingsData || savingsData.length === 0) {
-        seedSampleData(false);
+        if (emptyState) emptyState.classList.remove('hidden');
+        container.innerHTML = '';
+        return;
     }
 
     let filtered = savingsData.filter(item => {
