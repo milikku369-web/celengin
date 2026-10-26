@@ -816,3 +816,29 @@ function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
+
+// Inisialisasi tema saat script dimuat
+(function initTheme() {
+    const savedTheme = localStorage.getItem('app_theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+})();
+
+// Fungsi Toggle Global
+window.toggleDarkMode = function() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
+    
+    // Update ikon jika ada
+    const moonIcon = document.getElementById('themeMoonIcon');
+    const sunIcon = document.getElementById('themeSunIcon');
+    if (moonIcon && sunIcon) {
+        moonIcon.classList.toggle('hidden', isDark);
+        sunIcon.classList.toggle('hidden', !isDark);
+    }
+};
