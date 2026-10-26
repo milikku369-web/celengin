@@ -209,14 +209,15 @@ function setActiveTab(tab) {
     const tabT = document.getElementById('tab-tercapai');
 
     if (tab === 'berlangsung') {
-        tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-400 bg-[#282838] shadow transition";
-        tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-200 transition";
+        tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition";
+        tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition";
     } else {
-        tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-400 bg-[#282838] shadow transition";
-        tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-200 transition";
+        tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition";
+        tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition";
     }
     renderHome();
 }
+
 
 function toggleTopMenu() {
     document.getElementById('topMenu').classList.toggle('hidden');
