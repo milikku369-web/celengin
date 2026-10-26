@@ -46,8 +46,10 @@ let currentAuthMode = 'login'; // 'login' | 'register'
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
+    // Memastikan modal tersembunyi saat pertama kali dimuat
+    closeModalUsername();
     updateUserUI();
-    await loadStorage(); // Langsung muat data (cache lokal untuk guest atau cloud jika sudah login)
+    await loadStorage(); 
 });
 
 // AUTHENTICATION & USER MANAGEMENT
