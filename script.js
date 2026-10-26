@@ -895,12 +895,11 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// TEMA / LIGHT & DARK MODE MANAGEMENT
+// TEMA / LIGHT & DARK MODE MANAGEMENT (Bawaan Perangkat / Terang / Gelap)
 function initTheme() {
     const savedTheme = localStorage.getItem('app_theme') || 'system';
     applyTheme(savedTheme);
 
-    // Listener jika tema perangkat (HP/PC) berganti secara otomatis
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
         const currentTheme = localStorage.getItem('app_theme') || 'system';
         if (currentTheme === 'system') {
@@ -920,7 +919,7 @@ function cycleTheme() {
     localStorage.setItem('app_theme', nextTheme);
     applyTheme(nextTheme);
 
-    const labels = { system: 'Ikuti Sistem', light: 'Mode Terang', dark: 'Mode Gelap' };
+    const labels = { system: 'Ikuti Perangkat', light: 'Mode Terang', dark: 'Mode Gelap' };
     showToast(`Tema: ${labels[nextTheme]}`);
 }
 
@@ -942,6 +941,23 @@ function applyTheme(theme) {
 }
 
 function updateThemeUI(theme) {
+    const menuIconElem = document.getElementById('menuThemeIcon');
+    const menuLabelElem = document.getElementById('menuThemeLabel');
+
+    if (menuIconElem && menuLabelElem) {
+        if (theme === 'system') {
+            menuIconElem.className = 'fa-solid fa-circle-half-stroke text-blue-500 dark:text-blue-400 text-sm';
+            menuLabelElem.innerText = 'Sistem';
+        } else if (theme === 'light') {
+            menuIconElem.className = 'fa-solid fa-sun text-amber-500 text-sm';
+            menuLabelElem.innerText = 'Terang';
+        } else if (theme === 'dark') {
+            menuIconElem.className = 'fa-solid fa-moon text-indigo-400 text-sm';
+            menuLabelElem.innerText = 'Gelap';
+        }
+    }
+
+    // Backup listener untuk ikon tombol terpisah jika ada di HTML
     const iconElem = document.getElementById('themeIcon');
     const moonIcon = document.getElementById('themeMoonIcon');
     const sunIcon = document.getElementById('themeSunIcon');
