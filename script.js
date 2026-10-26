@@ -46,18 +46,19 @@ let currentAuthMode = 'login'; // 'login' | 'register'
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
-    if (!currentUser) {
-        openModalUsername();
-    } else {
-        updateUserUI();
-        await loadStorage();
-    }
+    updateUserUI();
+    await loadStorage(); // Langsung muat data (cache lokal untuk guest atau cloud jika sudah login)
 });
 
 // AUTHENTICATION & USER MANAGEMENT
 function openModalUsername() {
     switchAuthMode('login');
+    document.getElementById('topMenu')?.classList.add('hidden');
     document.getElementById('modalUsername')?.classList.remove('hidden');
+}
+
+function closeModalUsername() {
+    document.getElementById('modalUsername')?.classList.add('hidden');
 }
 
 function switchAuthMode(mode) {
@@ -132,40 +133,44 @@ async function handleAuthSubmit(e) {
                 showToast("Username sudah dipakai, pilih username lain!");
                 return;
             }
-            // Data bawaan awal untuk akun baru
-            savingsData = [
-                {
-                    id: 'savings-mac-001',
-                    title: 'tabungan MAC',
-                    targetAmount: 13500000,
-                    freqAmount: 50000,
-                    freqType: 'Perminggu',
-                    currencySymbol: 'Rp',
-                    currencyFlag: '🇮🇩',
-                    currencyCode: 'IDR',
-                    imageUrl: PRESET_IMAGES.mac,
-                    createdDate: formatDateOnlyNow(),
-                    reminderTime: '12:00',
-                    reminderFreq: 'Setiap Minggu',
-                    reminderEnabled: false,
-                    history: [
-                        {
-                            id: 'tx-001',
-                            type: 'deposit',
-                            amount: 2200000,
-                            dateStr: formatDateNow(),
-                            note: 'Setoran awal tabungan Mac'
-                        }
-                    ]
-                }
-            ];
+            
+            // Jika guest sudah membuat data celengan di cache lokal, sinkronkan data tersebut
+            if (!savingsData || savingsData.length === 0) {
+                savingsData = [
+                    {
+                        id: 'savings-mac-001',
+                        title: 'tabungan MAC',
+                        targetAmount: 13500000,
+                        freqAmount: 50000,
+                        freqType: 'Perminggu',
+                        currencySymbol: 'Rp',
+                        currencyFlag: '🇮🇩',
+                        currencyCode: 'IDR',
+                        imageUrl: PRESET_IMAGES.mac,
+                        createdDate: formatDateOnlyNow(),
+                        reminderTime: '12:00',
+                        reminderFreq: 'Setiap Minggu',
+                        reminderEnabled: false,
+                        history: [
+                            {
+                                id: 'tx-001',
+                                type: 'deposit',
+                                amount: 2200000,
+                                dateStr: formatDateNow(),
+                                note: 'Setoran awal tabungan Mac'
+                            }
+                        ]
+                    }
+                ];
+            }
+
             await docRef.set({
                 username: username,
                 password: password,
                 items: savingsData,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            showToast(`Akun @${username} berhasil dibuat! 🎉`);
+            showToast(`Akun @${username} berhasil dibuat & disinkronkan! 🎉`);
         } else {
             // PROSES LOGIN DENGAN VALIDASI PASSWORD
             if (!docSnap.exists) {
@@ -185,12 +190,13 @@ async function handleAuthSubmit(e) {
 
         currentUser = username;
         localStorage.setItem('tabungin_username', currentUser);
-        document.getElementById('modalUsername')?.classList.add('hidden');
+        closeModalUsername();
 
         if (document.getElementById('inputAuthPassword')) {
             document.getElementById('inputAuthPassword').value = '';
         }
 
+        saveStorage();
         updateUserUI();
         renderHome();
     } catch (err) {
@@ -203,66 +209,75 @@ function handleLogout() {
     document.getElementById('topMenu')?.classList.add('hidden');
     localStorage.removeItem('tabungin_username');
     currentUser = '';
-    savingsData = [];
+    
+    // Kembali ke mode Guest dan muat data cache lokal
+    loadStorage();
     updateUserUI();
-    renderHome();
-    showToast("Kamu berhasil keluar!");
-    openModalUsername();
+    showToast("Kamu kembali ke Mode Guest (Tamu)");
 }
 
 function updateUserUI() {
     const label = document.getElementById('currentUsernameLabel');
-    if (label) label.innerText = currentUser ? `@${currentUser}` : 'Guest';
+    const loginBtn = document.getElementById('menuLoginBtn');
+    const logoutBtn = document.getElementById('menuLogoutBtn');
+
+    if (currentUser) {
+        if (label) label.innerText = `@${currentUser}`;
+        if (loginBtn) loginBtn.classList.add('hidden');
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
+    } else {
+        if (label) label.innerText = '@Guest (Tamu)';
+        if (loginBtn) loginBtn.classList.remove('hidden');
+        if (logoutBtn) logoutBtn.classList.add('hidden');
+    }
 }
 
-// STORAGE MANAGEMENT (LOCAL + CLOUD FIREBASE PER USER)
+// STORAGE MANAGEMENT (LOCAL CACHE UNTUK GUEST + FIREBASE CLOUD JIKA LOGIN)
 async function loadStorage() {
-    if (!currentUser) return;
-    let loadedFromCloud = false;
-
-    if (db) {
+    if (currentUser && db) {
+        // MUAT DARI CLOUD FIREBASE JIKA SUDAH LOGIN
         try {
             const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
             const docSnap = await docRef.get();
 
             if (docSnap.exists && Array.isArray(docSnap.data().items)) {
                 savingsData = docSnap.data().items;
-                loadedFromCloud = true;
+                renderHome();
+                return;
             }
         } catch (err) {
             console.error("Gagal memuat data dari Firebase:", err);
         }
     }
 
-    if (!loadedFromCloud) {
-        try {
-            const stored = localStorage.getItem(`celenganku_data_${currentUser}`);
-            if (stored) {
-                savingsData = JSON.parse(stored);
-            } else {
-                savingsData = [];
-                seedSampleData(false);
-            }
-        } catch (err) {
-            savingsData = [];
+    // JIKA GUEST / BELUM LOGIN: MUAT DARI LOCALSTORAGE CACHE
+    const localKey = currentUser ? `celenganku_data_${currentUser}` : `celenganku_data_guest`;
+    try {
+        const stored = localStorage.getItem(localKey);
+        if (stored) {
+            savingsData = JSON.parse(stored);
+        } else {
+            seedSampleData(false);
         }
+    } catch (err) {
+        savingsData = [];
     }
 
     renderHome();
 }
 
 async function saveStorage() {
-    if (!currentUser) return;
+    const localKey = currentUser ? `celenganku_data_${currentUser}` : `celenganku_data_guest`;
 
-    // 1. Simpan di LocalStorage HP sesuai username
+    // 1. Selalu Simpan ke Cache Browser Lokal
     try {
-        localStorage.setItem(`celenganku_data_${currentUser}`, JSON.stringify(savingsData));
+        localStorage.setItem(localKey, JSON.stringify(savingsData));
     } catch (err) {
         console.error("Gagal menyimpan ke memori lokal", err);
     }
 
-    // 2. Simpan di Cloud Firebase Firestore sesuai doc(currentUser)
-    if (db) {
+    // 2. Hanya Simpan ke Cloud Database Firebase jika pengguna SUDAH LOGIN
+    if (currentUser && db) {
         try {
             await db.collection(COLLECTION_NAME).doc(currentUser).set({
                 username: currentUser,
