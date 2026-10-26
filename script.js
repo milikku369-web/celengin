@@ -68,7 +68,7 @@ function seedSampleData(notify = true) {
             createdDate: '18 Okt 2026',
             reminderTime: '12:00',
             reminderFreq: 'Setiap Minggu',
-            reminderEnabled: true,
+            reminderEnabled: false, // <-- Ubah dari true jadi false di sini
             history: [
                 {
                     id: 'tx-001',
@@ -81,8 +81,11 @@ function seedSampleData(notify = true) {
         }
     ];
     saveStorage();
+    renderHome();
+    if (currentDetailId) openDetailView(currentDetailId);
     if (notify) showToast("Data contoh berhasil dimuat");
 }
+
 
 function clearAllData() {
     savingsData = [];
