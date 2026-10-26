@@ -568,11 +568,11 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL 6: LOGIN & REGISTER USERNAME ==================== -->
+        <!-- ==================== MODAL 6: LOGIN & REGISTER DENGAN PASSWORD ==================== -->
     <div id="modalUsername" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 text-center">
             <div class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-500 dark:text-blue-400 mx-auto mb-3 text-2xl">
-                <i class="fa-solid fa-user-shield"></i>
+                <i class="fa-solid fa-user-lock"></i>
             </div>
 
             <!-- Tab Switching (Masuk / Daftar) -->
@@ -586,20 +586,31 @@
             </div>
 
             <h3 id="authTitle" class="text-base font-bold text-gray-900 dark:text-white mb-1">Masuk ke TABUNGin</h3>
-            <p id="authSubtitle" class="text-xs text-gray-500 dark:text-gray-400 mb-5">Masukkan username akunmu yang sudah terdaftar.</p>
+            <p id="authSubtitle" class="text-xs text-gray-500 dark:text-gray-400 mb-5">Masukkan username dan kata sandi akunmu.</p>
 
-            <form onsubmit="handleAuthSubmit(event)" class="space-y-4 text-xs">
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-3.5 text-xs">
+                <!-- Input Username -->
                 <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3">
                     <i class="fa-solid fa-at text-gray-400 mr-2.5 text-sm"></i>
                     <input type="text" id="inputAuthUsername" placeholder="Contoh: milikku3" required class="w-full bg-transparent text-gray-900 dark:text-white font-medium text-xs focus:outline-none">
                 </div>
 
-                <button type="submit" id="btnAuthSubmit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-600/20 text-xs transition active:scale-95">
+                <!-- Input Password -->
+                <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3 relative">
+                    <i class="fa-solid fa-key text-gray-400 mr-2.5 text-sm"></i>
+                    <input type="password" id="inputAuthPassword" placeholder="Kata Sandi / Password" required class="w-full bg-transparent text-gray-900 dark:text-white font-medium text-xs focus:outline-none pr-8">
+                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <i id="togglePassIcon" class="fa-solid fa-eye text-xs"></i>
+                    </button>
+                </div>
+
+                <button type="submit" id="btnAuthSubmit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-600/20 text-xs transition active:scale-95 mt-2">
                     Masuk ke Akun
                 </button>
             </form>
         </div>
     </div>
+
 
     <!-- ==================== TOAST NOTIFICATION ==================== -->
     <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900 dark:bg-[#1e1e2a] border border-gray-700 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2.5 transition-all duration-300 opacity-0 pointer-events-none">
