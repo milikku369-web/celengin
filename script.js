@@ -68,7 +68,7 @@ function seedSampleData(notify = true) {
             createdDate: '18 Okt 2026',
             reminderTime: '12:00',
             reminderFreq: 'Setiap Minggu',
-            reminderEnabled: false, // <-- Ubah dari true jadi false di sini
+            reminderEnabled: false,
             history: [
                 {
                     id: 'tx-001',
@@ -85,7 +85,6 @@ function seedSampleData(notify = true) {
     if (currentDetailId) openDetailView(currentDetailId);
     if (notify) showToast("Data contoh berhasil dimuat");
 }
-
 
 function clearAllData() {
     savingsData = [];
@@ -579,21 +578,21 @@ function handleSaveSavings(e) {
         }
     } else {
         const newItem = {
-    id: 'savings-' + Date.now(),
-    title: title,
-    targetAmount: targetAmount,
-    freqAmount: freqAmount,
-    freqType: freqType,
-    currencyCode: cCode,
-    currencySymbol: cSymbol,
-    currencyFlag: cFlag,
-    imageUrl: imageUrl,
-    createdDate: formatDateOnlyNow(),
-    reminderTime: '12:00',
-    reminderFreq: 'Setiap Minggu',
-    reminderEnabled: false, // <-- Ubah dari true jadi false di sini
-    history: []
-};
+            id: 'savings-' + Date.now(),
+            title: title,
+            targetAmount: targetAmount,
+            freqAmount: freqAmount,
+            freqType: freqType,
+            currencyCode: cCode,
+            currencySymbol: cSymbol,
+            currencyFlag: cFlag,
+            imageUrl: imageUrl,
+            createdDate: formatDateOnlyNow(),
+            reminderTime: '12:00',
+            reminderFreq: 'Setiap Minggu',
+            reminderEnabled: false,
+            history: []
+        };
         savingsData.push(newItem);
         saveStorage();
         renderHome();
@@ -896,36 +895,69 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// TEMA / LIGHT & DARK MODE MANAGEMENT
+// TEMA / LIGHT & DARK MODE MANAGEMENT (Terang, Gelap, Ikuti Sistem)
 function initTheme() {
-    const savedTheme = localStorage.getItem('app_theme');
+    const savedTheme = localStorage.getItem('app_theme') || 'system';
+    applyTheme(savedTheme);
+
+    // Listener otomatis jika tema bawaan perangkat (HP/PC) berganti
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        const currentTheme = localStorage.getItem('app_theme') || 'system';
+        if (currentTheme === 'system') {
+            applyTheme('system');
+        }
+    });
+}
+
+function cycleTheme() {
+    const currentTheme = localStorage.getItem('app_theme') || 'system';
+    let nextTheme = 'system';
+
+    if (currentTheme === 'system') nextTheme = 'light';
+    else if (currentTheme === 'light') nextTheme = 'dark';
+    else if (currentTheme === 'dark') nextTheme = 'system';
+
+    localStorage.setItem('app_theme', nextTheme);
+    applyTheme(nextTheme);
+
+    const labels = { system: 'Ikuti Sistem', light: 'Mode Terang', dark: 'Mode Gelap' };
+    showToast(`Tema: ${labels[nextTheme]}`);
+}
+
+function applyTheme(theme) {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-        document.documentElement.classList.add('dark');
-        updateThemeIcons(true);
-    } else {
-        document.documentElement.classList.remove('dark');
-        updateThemeIcons(false);
-    }
-}
-
-function toggleDarkMode() {
-    const isDark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
-    updateThemeIcons(isDark);
-}
-
-function updateThemeIcons(isDark) {
-    const moonIcon = document.getElementById('themeMoonIcon');
-    const sunIcon = document.getElementById('themeSunIcon');
-    if (!moonIcon || !sunIcon) return;
+    const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
 
     if (isDark) {
-        moonIcon.classList.add('hidden');
-        sunIcon.classList.remove('hidden');
+        document.documentElement.classList.add('dark');
     } else {
-        moonIcon.classList.remove('hidden');
-        sunIcon.classList.add('hidden');
+        document.documentElement.classList.remove('dark');
+    }
+
+    updateThemeUI(theme);
+}
+
+function updateThemeUI(theme) {
+    const iconElem = document.getElementById('themeIcon');
+    const moonIcon = document.getElementById('themeMoonIcon');
+    const sunIcon = document.getElementById('themeSunIcon');
+
+    // Jika HTML menggunakan tombol dengan id="themeIcon"
+    if (iconElem) {
+        if (theme === 'system') {
+            iconElem.className = 'fa-solid fa-desktop text-sm';
+        } else if (theme === 'dark') {
+            iconElem.className = 'fa-solid fa-moon text-sm';
+        } else {
+            iconElem.className = 'fa-solid fa-sun text-sm';
+        }
+    }
+
+    // Fallback jika HTML masih menggunakan dua ikon terpisah (themeMoonIcon & themeSunIcon)
+    if (moonIcon && sunIcon) {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+        moonIcon.classList.toggle('hidden', isDark);
+        sunIcon.classList.toggle('hidden', !isDark);
     }
 }
