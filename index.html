@@ -314,7 +314,7 @@
         <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-md rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 max-h-[90vh] overflow-y-auto no-scrollbar">
             <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700/60 mb-4">
                 <h3 id="modalSavingsTitle" class="text-base font-bold text-gray-900 dark:text-white">Tambah Celengan</h3>
-                <button onclick="closeModalSavings()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
+                <button type="button" onclick="closeModalSavings()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -486,7 +486,7 @@
     <!-- ==================== MODAL 3: TRANSACTION DETAIL POPUP ==================== -->
     <div id="modalTxDetail" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 relative">
-            <button onclick="closeModalTxDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
+            <button type="button" onclick="closeModalTxDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
@@ -497,11 +497,11 @@
             </div>
 
             <div class="grid grid-cols-2 gap-3 mt-6">
-                <button onclick="handleEditTxFromModal()" class="py-2.5 px-3 bg-blue-50 dark:bg-[#242a38] hover:bg-blue-100 dark:hover:bg-[#30384a] text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
+                <button type="button" onclick="handleEditTxFromModal()" class="py-2.5 px-3 bg-blue-50 dark:bg-[#242a38] hover:bg-blue-100 dark:hover:bg-[#30384a] text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
                     <i class="fa-solid fa-pencil text-sm"></i>
                     <span>Ubah</span>
                 </button>
-                <button onclick="handleDeleteTxFromModal()" class="py-2.5 px-3 bg-rose-50 dark:bg-[#38222a] hover:bg-rose-100 dark:hover:bg-[#4a2b38] text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/40 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
+                <button type="button" onclick="handleDeleteTxFromModal()" class="py-2.5 px-3 bg-rose-50 dark:bg-[#38222a] hover:bg-rose-100 dark:hover:bg-[#4a2b38] text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/40 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
                     <i class="fa-solid fa-trash-can text-sm"></i>
                     <span>Hapus</span>
                 </button>
@@ -518,8 +518,8 @@
             <h3 class="font-bold text-gray-900 dark:text-white text-sm mb-1">Hapus Celengan?</h3>
             <p class="text-xs text-gray-500 dark:text-gray-400 mb-5">Apakah Anda yakin ingin menghapus celengan ini? Semua riwayat transaksi akan hilang.</p>
             <div class="flex items-center gap-2">
-                <button onclick="closeConfirmDelete()" class="flex-1 py-2.5 bg-gray-100 dark:bg-[#282836] hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold">Batal</button>
-                <button onclick="executeDeleteSavings()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-md">Hapus</button>
+                <button type="button" onclick="closeConfirmDelete()" class="flex-1 py-2.5 bg-gray-100 dark:bg-[#282836] hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold">Batal</button>
+                <button type="button" onclick="executeDeleteSavings()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-md">Hapus</button>
             </div>
         </div>
     </div>
@@ -532,7 +532,7 @@
                     <i class="fa-solid fa-bell text-blue-600 dark:text-blue-400"></i>
                     <h3 class="text-base font-bold text-gray-900 dark:text-white">Pengaturan Pengingat</h3>
                 </div>
-                <button onclick="closeModalReminder()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
+                <button type="button" onclick="closeModalReminder()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -578,8 +578,8 @@
         <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 text-center relative">
             
             <!-- Tombol Tutup Modal Login -->
-            <button onclick="closeModalUsername()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
-                <i class="fa-solid fa-xmark text-lg"></i>
+            <button type="button" onclick="closeModalUsername()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition z-20 cursor-pointer">
+                <i class="fa-solid fa-xmark text-xl"></i>
             </button>
 
             <div class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-500 dark:text-blue-400 mx-auto mb-3 text-2xl">
