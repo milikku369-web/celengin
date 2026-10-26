@@ -22,7 +22,8 @@ let editingTxId = null;
 let selectedTxIdForModal = null;
 
 // INITIALIZATION
-window.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     loadStorage();
     renderHome();
 });
@@ -33,12 +34,13 @@ function loadStorage() {
         const stored = localStorage.getItem('celenganku_app_data');
         if (stored) {
             savingsData = JSON.parse(stored);
-        } else {
+        }
+        if (!savingsData || !Array.isArray(savingsData) || savingsData.length === 0) {
             seedSampleData(false);
         }
     } catch (err) {
         console.error("Failed to load storage", err);
-        savingsData = [];
+        seedSampleData(false);
     }
 }
 
@@ -79,8 +81,6 @@ function seedSampleData(notify = true) {
         }
     ];
     saveStorage();
-    renderHome();
-    if (currentDetailId) openDetailView(currentDetailId);
     if (notify) showToast("Data contoh berhasil dimuat");
 }
 
@@ -112,6 +112,7 @@ function formatCurrency(amount, symbol = 'Rp') {
 }
 
 function handleFormattedInput(inputElement) {
+    if (!inputElement) return;
     const cursorPosition = inputElement.selectionStart;
     const originalLength = inputElement.value.length;
 
@@ -123,7 +124,6 @@ function handleFormattedInput(inputElement) {
 
     inputElement.value = formatDots(numericValue);
 
-    // Maintain cursor position
     const newLength = inputElement.value.length;
     const diff = newLength - originalLength;
     inputElement.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
@@ -140,12 +140,7 @@ function clearInput(elementId) {
 function formatDateNow() {
     const now = new Date();
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    const day = now.getDate();
-    const month = months[now.getMonth()];
-    const year = now.getFullYear();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-    return `${day} ${month} ${year} • ${hours}:${mins}`;
+    return `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} • ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 }
 
 function formatDateOnlyNow() {
@@ -182,25 +177,26 @@ function calculateEstimasiText(item) {
 
 // VIEW ROUTING
 function showView(viewName) {
-    document.getElementById('topMenu').classList.add('hidden');
-    document.getElementById('sortDropdown').classList.add('hidden');
+    document.getElementById('topMenu')?.classList.add('hidden');
+    document.getElementById('sortDropdown')?.classList.add('hidden');
 
     const fab = document.getElementById('fabAddSavings');
+    const viewHome = document.getElementById('view-home');
+    const viewDetail = document.getElementById('view-detail');
 
     if (viewName === 'home') {
         currentDetailId = null;
-        document.getElementById('view-home').classList.remove('hidden');
-        document.getElementById('view-detail').classList.add('hidden');
-        if (fab) fab.classList.remove('hidden'); // Munculkan di halaman utama
+        if (viewHome) viewHome.classList.remove('hidden');
+        if (viewDetail) viewDetail.classList.add('hidden');
+        if (fab) fab.style.display = ''; 
         renderHome();
     } else if (viewName === 'detail') {
-        document.getElementById('view-home').classList.add('hidden');
-        document.getElementById('view-detail').classList.remove('hidden');
-        if (fab) fab.classList.add('hidden'); // Sembunyikan di halaman detail
+        if (viewHome) viewHome.classList.add('hidden');
+        if (viewDetail) viewDetail.classList.remove('hidden');
+        if (fab) fab.style.display = 'none'; 
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 
 // HOME PAGE RENDERING
 function setActiveTab(tab) {
@@ -208,46 +204,48 @@ function setActiveTab(tab) {
     const tabB = document.getElementById('tab-berlangsung');
     const tabT = document.getElementById('tab-tercapai');
 
-    if (tab === 'berlangsung') {
-        tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition";
-        tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition";
-    } else {
-        tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition";
-        tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition";
+    if (tabB && tabT) {
+        if (tab === 'berlangsung') {
+            tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition";
+            tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition";
+        } else {
+            tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition";
+            tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition";
+        }
     }
     renderHome();
 }
 
-
 function toggleTopMenu() {
-    document.getElementById('topMenu').classList.toggle('hidden');
+    document.getElementById('topMenu')?.classList.toggle('hidden');
 }
 
 function toggleSortDropdown() {
-    document.getElementById('sortDropdown').classList.toggle('hidden');
+    document.getElementById('sortDropdown')?.classList.toggle('hidden');
 }
 
 function setSortField(field, label) {
     currentSortField = field;
-    document.getElementById('currentSortLabel').innerText = label;
-    document.getElementById('sortDropdown').classList.add('hidden');
+    const labelElem = document.getElementById('currentSortLabel');
+    if (labelElem) labelElem.innerText = label;
+    document.getElementById('sortDropdown')?.classList.add('hidden');
     renderHome();
 }
 
 function toggleSortOrder() {
     currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-    document.getElementById('sortOrderIcon').className = currentSortOrder === 'asc' ? "fa-solid fa-arrow-up text-blue-400" : "fa-solid fa-arrow-down text-blue-400";
-    document.getElementById('sortOrderLabel').innerText = currentSortOrder === 'asc' ? "Meningkat" : "Menurun";
+    const icon = document.getElementById('sortOrderIcon');
+    const label = document.getElementById('sortOrderLabel');
+    if (icon) icon.className = currentSortOrder === 'asc' ? "fa-solid fa-arrow-up text-blue-500 dark:text-blue-400" : "fa-solid fa-arrow-down text-blue-500 dark:text-blue-400";
+    if (label) label.innerText = currentSortOrder === 'asc' ? "Meningkat" : "Menurun";
     renderHome();
 }
 
 function renderHome() {
-    // Otomatis cek ID 'savingsListContainer' atau 'savingsList'
     const container = document.getElementById('savingsListContainer') || document.getElementById('savingsList');
     const emptyState = document.getElementById('emptyState');
     if (!container) return;
 
-    // Jika data kosong di memori, muat data contoh otomatis
     if (!savingsData || savingsData.length === 0) {
         seedSampleData(false);
     }
@@ -290,7 +288,6 @@ function renderHome() {
     if (emptyState) emptyState.classList.add('hidden');
 
     container.innerHTML = filtered.map(item => {
-        const terkumpul = calculateTerkumpul(item);
         const pct = calculatePercentage(item);
         const displayPct = Math.min(100, pct);
         const estimasiText = calculateEstimasiText(item);
@@ -332,7 +329,6 @@ function renderHome() {
     }).join('');
 }
 
-
 // DETAIL PAGE RENDERING
 function openDetailView(id) {
     currentDetailId = id;
@@ -348,25 +344,33 @@ function openDetailView(id) {
     const displayPct = Math.min(100, pct);
     const symbol = item.currencySymbol || 'Rp';
 
-    document.getElementById('detailHeaderTitle').innerText = item.title;
-    document.getElementById('detailImg').src = item.imageUrl || PRESET_IMAGES.mac;
-    document.getElementById('detailTargetAmount').innerText = formatCurrency(item.targetAmount, symbol);
-    document.getElementById('detailFrequency').innerText = `${formatCurrency(item.freqAmount, symbol)} ${item.freqType || 'Perminggu'}`;
+    const setTxt = (elemId, txt) => {
+        const el = document.getElementById(elemId);
+        if (el) el.innerText = txt;
+    };
+
+    setTxt('detailHeaderTitle', item.title);
+    setTxt('detailTargetAmount', formatCurrency(item.targetAmount, symbol));
+    setTxt('detailFrequency', `${formatCurrency(item.freqAmount, symbol)} ${item.freqType || 'Perminggu'}`);
+    setTxt('detailPercentText', `${pct}%`);
+    setTxt('detailCreatedDate', item.createdDate || '-');
+    setTxt('detailEstimasi', calculateEstimasiText(item));
+    setTxt('detailReminderTime', item.reminderTime || '12:00');
+    setTxt('detailReminderFreq', item.reminderFreq || 'Setiap Minggu');
+    setTxt('detailTerkumpul', formatCurrency(terkumpul, symbol));
+    setTxt('detailKekurangan', formatCurrency(kekurang, symbol));
+
+    const imgElem = document.getElementById('detailImg');
+    if (imgElem) imgElem.src = item.imageUrl || PRESET_IMAGES.mac;
 
     const circle = document.getElementById('detailCircleProgress');
-    const dashOffset = (201.06 - (201.06 * displayPct / 100)).toFixed(2);
-    circle.setAttribute('stroke-dashoffset', dashOffset);
-    document.getElementById('detailPercentText').innerText = `${pct}%`;
+    if (circle) {
+        const dashOffset = (201.06 - (201.06 * displayPct / 100)).toFixed(2);
+        circle.setAttribute('stroke-dashoffset', dashOffset);
+    }
 
-    document.getElementById('detailCreatedDate').innerText = item.createdDate || '-';
-    document.getElementById('detailEstimasi').innerText = calculateEstimasiText(item);
-
-    document.getElementById('detailReminderTime').innerText = item.reminderTime || '12:00';
-    document.getElementById('detailReminderFreq').innerText = item.reminderFreq || 'Setiap Minggu';
-    document.getElementById('toggleReminder').checked = item.reminderEnabled !== false;
-
-    document.getElementById('detailTerkumpul').innerText = formatCurrency(terkumpul, symbol);
-    document.getElementById('detailKekurangan').innerText = formatCurrency(kekurang, symbol);
+    const reminderToggle = document.getElementById('toggleReminder');
+    if (reminderToggle) reminderToggle.checked = item.reminderEnabled !== false;
 
     renderDetailHistory(item);
     showView('detail');
@@ -375,27 +379,27 @@ function openDetailView(id) {
 function renderDetailHistory(item) {
     const container = document.getElementById('detailHistoryContainer');
     const countSpan = document.getElementById('detailHistoryCount');
-    const symbol = item.currencySymbol || 'Rp';
+    if (!container) return;
 
     if (!item.history || item.history.length === 0) {
         container.innerHTML = `<p class="text-xs text-gray-500 text-center py-6">Belum ada catatan tabungan</p>`;
-        countSpan.innerText = "0 Transaksi";
+        if (countSpan) countSpan.innerText = "0 Transaksi";
         return;
     }
 
-    countSpan.innerText = `${item.history.length} Transaksi`;
+    if (countSpan) countSpan.innerText = `${item.history.length} Transaksi`;
 
     const sortedTx = [...item.history].reverse();
 
     container.innerHTML = sortedTx.map(tx => {
         const isDep = tx.type === 'deposit';
         const sign = isDep ? '+' : '-';
-        const textColor = isDep ? 'text-emerald-400' : 'text-rose-400';
+        const textColor = isDep ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400';
 
         return `
-            <div onclick="openModalTxDetail('${tx.id}')" class="flex items-center justify-between p-3.5 rounded-2xl bg-[#14141c] hover:bg-[#20202e] border border-gray-800/80 cursor-pointer transition active:scale-[0.99]">
+            <div onclick="openModalTxDetail('${tx.id}')" class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 dark:bg-[#14141c] hover:bg-gray-100 dark:hover:bg-[#20202e] border border-gray-200 dark:border-gray-800/80 cursor-pointer transition active:scale-[0.99]">
                 <div>
-                    <p class="text-xs font-semibold text-gray-200">${escapeHtml(tx.note || (isDep ? 'Setoran Tabungan' : 'Penarikan Tabungan'))}</p>
+                    <p class="text-xs font-semibold text-gray-800 dark:text-gray-200">${escapeHtml(tx.note || (isDep ? 'Setoran Tabungan' : 'Penarikan Tabungan'))}</p>
                     <p class="text-[10px] text-gray-500 mt-0.5">${tx.dateStr}</p>
                 </div>
                 <div class="text-right">
@@ -411,14 +415,16 @@ function updateLivePreview(url) {
     const previewImg = document.getElementById('modalImgPreview');
     const placeholder = document.getElementById('modalImgPlaceholder');
 
-    if (url && url.trim() !== "") {
-        previewImg.src = url;
-        previewImg.classList.remove('hidden');
-        placeholder.classList.add('hidden');
-    } else {
-        previewImg.src = "";
-        previewImg.classList.add('hidden');
-        placeholder.classList.remove('hidden');
+    if (previewImg && placeholder) {
+        if (url && url.trim() !== "") {
+            previewImg.src = url;
+            previewImg.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        } else {
+            previewImg.src = "";
+            previewImg.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        }
     }
 }
 
@@ -435,7 +441,8 @@ function handleFileSelect(e) {
     const reader = new FileReader();
     reader.onload = function(evt) {
         const base64Str = evt.target.result;
-        document.getElementById('inputImage').value = base64Str;
+        const inputImg = document.getElementById('inputImage');
+        if (inputImg) inputImg.value = base64Str;
         updateLivePreview(base64Str);
     };
     reader.readAsDataURL(file);
@@ -444,52 +451,63 @@ function handleFileSelect(e) {
 function setPresetImg(key) {
     if (PRESET_IMAGES[key]) {
         const url = PRESET_IMAGES[key];
-        document.getElementById('inputImage').value = url;
-        document.getElementById('inputFileImage').value = "";
+        const inputImg = document.getElementById('inputImage');
+        const inputFileInput = document.getElementById('inputFileImage');
+        if (inputImg) inputImg.value = url;
+        if (inputFileInput) inputFileInput.value = "";
         updateLivePreview(url);
     }
 }
 
 // MODAL CELENGAN (ADD / EDIT)
 function setFreqType(type) {
-    document.getElementById('inputFreqType').value = type;
+    const freqInput = document.getElementById('inputFreqType');
+    if (freqInput) freqInput.value = type;
+
     const btnH = document.getElementById('btnFreqHarian');
     const btnM = document.getElementById('btnFreqMingguan');
     const btnB = document.getElementById('btnFreqBulanan');
 
     [btnH, btnM, btnB].forEach(b => {
-        b.className = "flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition";
+        if (b) b.className = "flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition";
     });
 
-    if (type === 'Perhari') {
-        btnH.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold bg-[#2a2a38] text-white shadow transition";
-    } else if (type === 'Perminggu') {
-        btnM.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold bg-[#2a2a38] text-white shadow transition";
-    } else {
-        btnB.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold bg-[#2a2a38] text-white shadow transition";
-    }
+    const activeClass = "flex-1 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#2a2a38] text-blue-600 dark:text-white shadow transition";
+    if (type === 'Perhari' && btnH) btnH.className = activeClass;
+    else if (type === 'Perminggu' && btnM) btnM.className = activeClass;
+    else if (type === 'Perbulan' && btnB) btnB.className = activeClass;
 }
 
 function handleCurrencyChange(val) {
     const parts = val.split('|');
-    if (parts.length >= 3) {
-        document.getElementById('currencyFlag').innerText = parts[2];
+    const flagElem = document.getElementById('currencyFlag');
+    if (parts.length >= 3 && flagElem) {
+        flagElem.innerText = parts[2];
     }
 }
 
 function openModalAddSavings() {
-    document.getElementById('modalSavingsTitle').innerText = "Tambah Celengan";
-    document.getElementById('inputSavingsId').value = "";
-    document.getElementById('inputTitle').value = "";
-    document.getElementById('inputTargetAmount').value = "";
-    document.getElementById('inputFreqAmount').value = "";
-    document.getElementById('inputCurrency').value = "IDR|Rp|🇮🇩";
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
+    const setTitle = (txt) => {
+        const el = document.getElementById('modalSavingsTitle');
+        if (el) el.innerText = txt;
+    };
+
+    setTitle("Tambah Celengan");
+    setVal('inputSavingsId', "");
+    setVal('inputTitle', "");
+    setVal('inputTargetAmount', "");
+    setVal('inputFreqAmount', "");
+    setVal('inputCurrency', "IDR|Rp|🇮🇩");
     handleCurrencyChange("IDR|Rp|🇮🇩");
     setFreqType('Perminggu');
-    document.getElementById('inputImage').value = "";
-    document.getElementById('inputFileImage').value = "";
+    setVal('inputImage', "");
+    setVal('inputFileImage', "");
     updateLivePreview("");
-    document.getElementById('modalSavings').classList.remove('hidden');
+    document.getElementById('modalSavings')?.classList.remove('hidden');
 }
 
 function openModalEditSavings() {
@@ -497,39 +515,48 @@ function openModalEditSavings() {
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
-    document.getElementById('modalSavingsTitle').innerText = "Edit Celengan";
-    document.getElementById('inputSavingsId').value = item.id;
-    document.getElementById('inputTitle').value = item.title;
-    document.getElementById('inputTargetAmount').value = formatDots(item.targetAmount);
-    document.getElementById('inputFreqAmount').value = formatDots(item.freqAmount);
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
+
+    const modalTitle = document.getElementById('modalSavingsTitle');
+    if (modalTitle) modalTitle.innerText = "Edit Celengan";
+
+    setVal('inputSavingsId', item.id);
+    setVal('inputTitle', item.title);
+    setVal('inputTargetAmount', formatDots(item.targetAmount));
+    setVal('inputFreqAmount', formatDots(item.freqAmount));
     setFreqType(item.freqType || "Perminggu");
 
     const currVal = `${item.currencyCode || 'IDR'}|${item.currencySymbol || 'Rp'}|${item.currencyFlag || '🇮🇩'}`;
-    document.getElementById('inputCurrency').value = currVal;
+    setVal('inputCurrency', currVal);
     handleCurrencyChange(currVal);
 
-    document.getElementById('inputImage').value = item.imageUrl || "";
-    document.getElementById('inputFileImage').value = "";
+    setVal('inputImage', item.imageUrl || "");
+    setVal('inputFileImage', "");
     updateLivePreview(item.imageUrl || "");
-    document.getElementById('modalSavings').classList.remove('hidden');
+    document.getElementById('modalSavings')?.classList.remove('hidden');
 }
 
 function closeModalSavings() {
-    document.getElementById('modalSavings').classList.add('hidden');
+    document.getElementById('modalSavings')?.classList.add('hidden');
 }
 
 function handleSaveSavings(e) {
-    e.preventDefault();
-    const id = document.getElementById('inputSavingsId').value;
-    const title = document.getElementById('inputTitle').value.trim();
-    const targetAmount = parseNominal(document.getElementById('inputTargetAmount').value);
-    const freqAmount = parseNominal(document.getElementById('inputFreqAmount').value);
-    const freqType = document.getElementById('inputFreqType').value;
+    if (e) e.preventDefault();
+    const getVal = (id) => document.getElementById(id)?.value || "";
 
-    const currVal = document.getElementById('inputCurrency').value;
+    const id = getVal('inputSavingsId');
+    const title = getVal('inputTitle').trim();
+    const targetAmount = parseNominal(getVal('inputTargetAmount'));
+    const freqAmount = parseNominal(getVal('inputFreqAmount'));
+    const freqType = getVal('inputFreqType');
+
+    const currVal = getVal('inputCurrency');
     const [cCode, cSymbol, cFlag] = currVal.split('|');
 
-    let imageUrl = document.getElementById('inputImage').value.trim();
+    let imageUrl = getVal('inputImage').trim();
     if (!imageUrl) imageUrl = PRESET_IMAGES.mac;
 
     if (id) {
@@ -580,25 +607,35 @@ function openModalTransaction() {
     if (!item) return;
 
     editingTxId = null;
-    document.getElementById('modalTxTitle').innerText = "Catat Tabungan";
+    const modalTitle = document.getElementById('modalTxTitle');
+    if (modalTitle) modalTitle.innerText = "Catat Tabungan";
+
     setTransactionType('deposit');
-    document.getElementById('inputTxAmount').value = "";
-    document.getElementById('inputTxNote').value = "";
+    const inputAmt = document.getElementById('inputTxAmount');
+    const inputNote = document.getElementById('inputTxNote');
+    if (inputAmt) inputAmt.value = "";
+    if (inputNote) inputNote.value = "";
 
     const terkumpul = calculateTerkumpul(item);
     const kekurang = Math.max(0, item.targetAmount - terkumpul);
 
-    document.getElementById('chipPeriodic').innerText = `${formatDots(item.freqAmount)}`;
-    document.getElementById('chipPeriodic').onclick = () => setTxChipAmount(item.freqAmount);
+    const chipP = document.getElementById('chipPeriodic');
+    if (chipP) {
+        chipP.innerText = `${formatDots(item.freqAmount)}`;
+        chipP.onclick = () => setTxChipAmount(item.freqAmount);
+    }
 
-    document.getElementById('chipRemaining').innerText = `${formatDots(kekurang)}`;
-    document.getElementById('chipRemaining').onclick = () => setTxChipAmount(kekurang);
+    const chipR = document.getElementById('chipRemaining');
+    if (chipR) {
+        chipR.innerText = `${formatDots(kekurang)}`;
+        chipR.onclick = () => setTxChipAmount(kekurang);
+    }
 
-    document.getElementById('modalTransaction').classList.remove('hidden');
+    document.getElementById('modalTransaction')?.classList.remove('hidden');
 }
 
 function closeModalTransaction() {
-    document.getElementById('modalTransaction').classList.add('hidden');
+    document.getElementById('modalTransaction')?.classList.add('hidden');
     editingTxId = null;
 }
 
@@ -607,17 +644,20 @@ function setTransactionType(type) {
     const btnDep = document.getElementById('btnTypeDeposit');
     const btnWith = document.getElementById('btnTypeWithdraw');
 
-    if (type === 'deposit') {
-        btnDep.className = "flex-1 py-2 rounded-xl text-xs font-semibold bg-[#2a3040] text-white shadow transition";
-        btnWith.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white transition";
-    } else {
-        btnWith.className = "flex-1 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow transition";
-        btnDep.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white transition";
+    if (btnDep && btnWith) {
+        if (type === 'deposit') {
+            btnDep.className = "flex-1 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white shadow transition";
+            btnWith.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition";
+        } else {
+            btnWith.className = "flex-1 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow transition";
+            btnDep.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition";
+        }
     }
 }
 
 function setTxChipAmount(val) {
-    document.getElementById('inputTxAmount').value = formatDots(val);
+    const elem = document.getElementById('inputTxAmount');
+    if (elem) elem.value = formatDots(val);
 }
 
 function handleSaveTransaction(e) {
@@ -627,8 +667,8 @@ function handleSaveTransaction(e) {
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
-    const amount = parseNominal(document.getElementById('inputTxAmount').value);
-    const note = document.getElementById('inputTxNote').value.trim();
+    const amount = parseNominal(document.getElementById('inputTxAmount')?.value);
+    const note = (document.getElementById('inputTxNote')?.value || "").trim();
 
     if (!amount || amount <= 0) {
         showToast("Nominal tabungan harus lebih dari 0!");
@@ -689,24 +729,29 @@ function openModalTxDetail(txId) {
 
     const isDep = tx.type === 'deposit';
     const amountElem = document.getElementById('txDetailAmount');
-    amountElem.innerText = `${isDep ? '+' : '-'} ${formatDots(tx.amount)}`;
-    amountElem.className = `text-3xl font-extrabold tracking-tight ${isDep ? 'text-emerald-400' : 'text-rose-400'}`;
-
-    document.getElementById('txDetailDate').innerText = tx.dateStr;
-
-    const noteElem = document.getElementById('txDetailNote');
-    if (tx.note && tx.note.trim() !== '') {
-        noteElem.innerText = `"${tx.note}"`;
-        noteElem.classList.remove('hidden');
-    } else {
-        noteElem.classList.add('hidden');
+    if (amountElem) {
+        amountElem.innerText = `${isDep ? '+' : '-'} ${formatDots(tx.amount)}`;
+        amountElem.className = `text-3xl font-extrabold tracking-tight ${isDep ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`;
     }
 
-    document.getElementById('modalTxDetail').classList.remove('hidden');
+    const dateElem = document.getElementById('txDetailDate');
+    if (dateElem) dateElem.innerText = tx.dateStr;
+
+    const noteElem = document.getElementById('txDetailNote');
+    if (noteElem) {
+        if (tx.note && tx.note.trim() !== '') {
+            noteElem.innerText = `"${tx.note}"`;
+            noteElem.classList.remove('hidden');
+        } else {
+            noteElem.classList.add('hidden');
+        }
+    }
+
+    document.getElementById('modalTxDetail')?.classList.remove('hidden');
 }
 
 function closeModalTxDetail() {
-    document.getElementById('modalTxDetail').classList.add('hidden');
+    document.getElementById('modalTxDetail')?.classList.add('hidden');
 }
 
 function handleEditTxFromModal() {
@@ -720,21 +765,32 @@ function handleEditTxFromModal() {
     if (!tx) return;
 
     editingTxId = tx.id;
-    document.getElementById('modalTxTitle').innerText = "Ubah Catatan Tabungan";
+    const titleElem = document.getElementById('modalTxTitle');
+    if (titleElem) titleElem.innerText = "Ubah Catatan Tabungan";
+
     setTransactionType(tx.type);
-    document.getElementById('inputTxAmount').value = formatDots(tx.amount);
-    document.getElementById('inputTxNote').value = tx.note || "";
+
+    const inputAmt = document.getElementById('inputTxAmount');
+    const inputNote = document.getElementById('inputTxNote');
+    if (inputAmt) inputAmt.value = formatDots(tx.amount);
+    if (inputNote) inputNote.value = tx.note || "";
 
     const terkumpul = calculateTerkumpul(item);
     const kekurang = Math.max(0, item.targetAmount - terkumpul);
 
-    document.getElementById('chipPeriodic').innerText = `${formatDots(item.freqAmount)}`;
-    document.getElementById('chipPeriodic').onclick = () => setTxChipAmount(item.freqAmount);
+    const chipP = document.getElementById('chipPeriodic');
+    if (chipP) {
+        chipP.innerText = `${formatDots(item.freqAmount)}`;
+        chipP.onclick = () => setTxChipAmount(item.freqAmount);
+    }
 
-    document.getElementById('chipRemaining').innerText = `${formatDots(kekurang)}`;
-    document.getElementById('chipRemaining').onclick = () => setTxChipAmount(kekurang);
+    const chipR = document.getElementById('chipRemaining');
+    if (chipR) {
+        chipR.innerText = `${formatDots(kekurang)}`;
+        chipR.onclick = () => setTxChipAmount(kekurang);
+    }
 
-    document.getElementById('modalTransaction').classList.remove('hidden');
+    document.getElementById('modalTransaction')?.classList.remove('hidden');
 }
 
 function handleDeleteTxFromModal() {
@@ -759,27 +815,31 @@ function openModalReminder() {
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
-    document.getElementById('inputReminderTime').value = item.reminderTime || '12:00';
-    document.getElementById('inputReminderFreq').value = item.reminderFreq || 'Setiap Minggu';
-    document.getElementById('inputReminderActive').checked = item.reminderEnabled !== false;
+    const timeInp = document.getElementById('inputReminderTime');
+    const freqInp = document.getElementById('inputReminderFreq');
+    const activeInp = document.getElementById('inputReminderActive');
 
-    document.getElementById('modalReminder').classList.remove('hidden');
+    if (timeInp) timeInp.value = item.reminderTime || '12:00';
+    if (freqInp) freqInp.value = item.reminderFreq || 'Setiap Minggu';
+    if (activeInp) activeInp.checked = item.reminderEnabled !== false;
+
+    document.getElementById('modalReminder')?.classList.remove('hidden');
 }
 
 function closeModalReminder() {
-    document.getElementById('modalReminder').classList.add('hidden');
+    document.getElementById('modalReminder')?.classList.add('hidden');
 }
 
 function handleSaveReminder(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!currentDetailId) return;
 
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
-    item.reminderTime = document.getElementById('inputReminderTime').value;
-    item.reminderFreq = document.getElementById('inputReminderFreq').value;
-    item.reminderEnabled = document.getElementById('inputReminderActive').checked;
+    item.reminderTime = document.getElementById('inputReminderTime')?.value || '12:00';
+    item.reminderFreq = document.getElementById('inputReminderFreq')?.value || 'Setiap Minggu';
+    item.reminderEnabled = document.getElementById('inputReminderActive')?.checked !== false;
 
     saveStorage();
     closeModalReminder();
@@ -799,11 +859,11 @@ function toggleReminderState(enabled) {
 
 // DELETE CELENGAN
 function confirmDeleteSavings() {
-    document.getElementById('modalConfirmDelete').classList.remove('hidden');
+    document.getElementById('modalConfirmDelete')?.classList.remove('hidden');
 }
 
 function closeConfirmDelete() {
-    document.getElementById('modalConfirmDelete').classList.add('hidden');
+    document.getElementById('modalConfirmDelete')?.classList.add('hidden');
 }
 
 function executeDeleteSavings() {
@@ -818,12 +878,14 @@ function executeDeleteSavings() {
 // TOAST HELPER
 function showToast(msg) {
     const toast = document.getElementById('toast');
-    document.getElementById('toastMsg').innerText = msg;
-    toast.classList.remove('opacity-0', 'pointer-events-none');
-
-    setTimeout(() => {
-        toast.classList.add('opacity-0', 'pointer-events-none');
-    }, 2500);
+    const toastMsg = document.getElementById('toastMsg');
+    if (toastMsg) toastMsg.innerText = msg;
+    if (toast) {
+        toast.classList.remove('opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'pointer-events-none');
+        }, 2500);
+    }
 }
 
 function escapeHtml(str) {
@@ -831,11 +893,7 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// INISIALISASI & MANAGEMENT TEMA
-document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-});
-
+// TEMA / LIGHT & DARK MODE MANAGEMENT
 function initTheme() {
     const savedTheme = localStorage.getItem('app_theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
