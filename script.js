@@ -242,110 +242,16 @@ function toggleSortOrder() {
 }
 
 function renderHome() {
-    const container = document.getElementById('savingsListContainer');
-    const emptyState = document.getElementById('emptyState');
-
-    let filtered = savingsData.filter(item => {
-        const pct = calculatePercentage(item);
-        return activeTab === 'tercapai' ? pct >= 100 : pct < 100;
-    });
-
-    filtered.sort((a, b) => {
-        let valA, valB;
-        if (currentSortField === 'nama') {
-            valA = a.title.toLowerCase();
-            valB = b.title.toLowerCase();
-            return currentSortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        } else if (currentSortField === 'persen') {
-            valA = calculatePercentage(a);
-            valB = calculatePercentage(b);
-        } else if (currentSortField === 'target') {
-            valA = a.targetAmount;
-            valB = b.targetAmount;
-        } else if (currentSortField === 'terkumpul') {
-            valA = calculateTerkumpul(a);
-            valB = calculateTerkumpul(b);
-        }
-        return currentSortOrder === 'asc' ? valA - valB : valB - valA;
-    });
-
-    if (filtered.length === 0) {
-        container.innerHTML = "";
-        emptyState.classList.remove('hidden');
-        return;
-    } else {
-        emptyState.classList.add('hidden');
-    }
-
-    container.innerHTML = filtered.map(item => {
-        const terkumpul = calculateTerkumpul(item);
-        const pct = calculatePercentage(item);
-        const displayPct = Math.min(100, pct);
-        const estimasiText = calculateEstimasiText(item);
-        const img = item.imageUrl || PRESET_IMAGES.mac;
-        const symbol = item.currencySymbol || 'Rp';
-
-        return `
-            <div onclick="openDetailView('${item.id}')" class="bg-[#181820] border border-gray-800/80 hover:border-gray-700 rounded-3xl p-5 shadow-xl cursor-pointer transition transform hover:-translate-y-1 active:scale-[0.99] flex flex-col justify-between space-y-4">
-                <div>
-                    <h3 class="text-xl font-bold text-white tracking-wide truncate mb-3">${escapeHtml(item.title)}</h3>
-
-                    <div class="w-full h-48 rounded-2xl overflow-hidden bg-[#22222e] flex items-center justify-center">
-                        <img src="${img}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/22222a/94a3b8?text=Impian+Kamu';">
-                    </div>
-                </div>
-
-                <div>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="text-2xl font-extrabold text-white">${formatCurrency(item.targetAmount, symbol)}</h4>
-                            <p class="text-xs text-gray-400 mt-0.5 font-medium">${formatCurrency(item.freqAmount, symbol)} ${escapeHtml(item.freqType || 'Perminggu')}</p>
-                        </div>
-                        <div class="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-14 h-14 transform -rotate-90">
-                                <circle cx="28" cy="28" r="22" stroke="#282836" stroke-width="4" fill="transparent" />
-                                <circle cx="28" cy="28" r="22" stroke="#3b82f6" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="${(138.23 - (138.23 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" class="transition-all duration-500 ease-out" />
-         function renderHome() {
-    const container = document.getElementById('savingsListContainer');
-    const emptyState = document.getElementById('emptyState');
-
-    let filtered = savingsData.filter(item => {
-        const pct = calculatePercentage(item);
-        return activeTab === 'tercapai' ? pct >= 100 : pct < 100;
-    });
-
-    filtered.sort((a, b) => {
-        let valA, valB;
-        if (currentSortField === 'nama') {
-            valA = a.title.toLowerCase();
-            valB = b.title.toLowerCase();
-            return currentSortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        } else if (currentSortField === 'persen') {
-            valA = calculatePercentage(a);
-            valB = calculatePercentage(b);
-        } else if (currentSortField === 'target') {
-            valA = a.targetAmount;
-            valB = b.targetAmount;
-        } else if (currentSortField === 'terkumpul') {
-            valA = calculateTerkumpul(a);
-            valB = calculateTerkumpul(b);
-        }
-        return currentSortOrder === 'asc' ? valA - valB : valB - valA;
-    });
-
-    if (filtered.length === 0) {
-        container.innerHTML = "";
-        emptyState.classList.remove('hidden');
-        return;
-    } else {
-        emptyState.classList.add('hidden');
-    }
-
-function renderHome() {
-    const container = document.getElementById('savingsListContainer');
+    // Otomatis cek ID 'savingsListContainer' atau 'savingsList'
+    const container = document.getElementById('savingsListContainer') || document.getElementById('savingsList');
     const emptyState = document.getElementById('emptyState');
     if (!container) return;
 
+    // Jika data kosong di memori, muat data contoh otomatis
+    if (!savingsData || savingsData.length === 0) {
+        seedSampleData(false);
+    }
+
     let filtered = savingsData.filter(item => {
         const pct = calculatePercentage(item);
         return activeTab === 'tercapai' ? pct >= 100 : pct < 100;
@@ -354,15 +260,15 @@ function renderHome() {
     filtered.sort((a, b) => {
         let valA, valB;
         if (currentSortField === 'nama') {
-            valA = a.title.toLowerCase();
-            valB = b.title.toLowerCase();
+            valA = (a.title || '').toLowerCase();
+            valB = (b.title || '').toLowerCase();
             return currentSortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         } else if (currentSortField === 'persen') {
             valA = calculatePercentage(a);
             valB = calculatePercentage(b);
         } else if (currentSortField === 'target') {
-            valA = a.targetAmount;
-            valB = b.targetAmount;
+            valA = a.targetAmount || 0;
+            valB = b.targetAmount || 0;
         } else if (currentSortField === 'terkumpul') {
             valA = calculateTerkumpul(a);
             valB = calculateTerkumpul(b);
@@ -371,12 +277,17 @@ function renderHome() {
     });
 
     if (filtered.length === 0) {
-        container.innerHTML = "";
-        if (emptyState) emptyState.classList.remove('hidden');
-        return;
-    } else {
+        container.innerHTML = `
+            <div class="col-span-full text-center py-12 text-gray-400 dark:text-gray-500">
+                <i class="fa-solid fa-piggy-bank text-4xl mb-3 opacity-50"></i>
+                <p class="text-sm">Belum ada tabungan di kategori ini.</p>
+            </div>
+        `;
         if (emptyState) emptyState.classList.add('hidden');
+        return;
     }
+
+    if (emptyState) emptyState.classList.add('hidden');
 
     container.innerHTML = filtered.map(item => {
         const terkumpul = calculateTerkumpul(item);
@@ -420,7 +331,6 @@ function renderHome() {
         `;
     }).join('');
 }
-
 
 
 // DETAIL PAGE RENDERING
