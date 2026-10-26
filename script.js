@@ -305,20 +305,85 @@ function renderHome() {
                             <svg class="w-14 h-14 transform -rotate-90">
                                 <circle cx="28" cy="28" r="22" stroke="#282836" stroke-width="4" fill="transparent" />
                                 <circle cx="28" cy="28" r="22" stroke="#3b82f6" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="${(138.23 - (138.23 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" class="transition-all duration-500 ease-out" />
+         function renderHome() {
+    const container = document.getElementById('savingsListContainer');
+    const emptyState = document.getElementById('emptyState');
+
+    let filtered = savingsData.filter(item => {
+        const pct = calculatePercentage(item);
+        return activeTab === 'tercapai' ? pct >= 100 : pct < 100;
+    });
+
+    filtered.sort((a, b) => {
+        let valA, valB;
+        if (currentSortField === 'nama') {
+            valA = a.title.toLowerCase();
+            valB = b.title.toLowerCase();
+            return currentSortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else if (currentSortField === 'persen') {
+            valA = calculatePercentage(a);
+            valB = calculatePercentage(b);
+        } else if (currentSortField === 'target') {
+            valA = a.targetAmount;
+            valB = b.targetAmount;
+        } else if (currentSortField === 'terkumpul') {
+            valA = calculateTerkumpul(a);
+            valB = calculateTerkumpul(b);
+        }
+        return currentSortOrder === 'asc' ? valA - valB : valB - valA;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = "";
+        emptyState.classList.remove('hidden');
+        return;
+    } else {
+        emptyState.classList.add('hidden');
+    }
+
+    container.innerHTML = filtered.map(item => {
+        const terkumpul = calculateTerkumpul(item);
+        const pct = calculatePercentage(item);
+        const displayPct = Math.min(100, pct);
+        const estimasiText = calculateEstimasiText(item);
+        const img = item.imageUrl || PRESET_IMAGES.mac;
+        const symbol = item.currencySymbol || 'Rp';
+
+        return `
+            <div onclick="openDetailView('${item.id}')" class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 hover:border-gray-300 dark:hover:border-gray-700 rounded-3xl p-5 shadow-xl cursor-pointer transition transform hover:-translate-y-1 active:scale-[0.99] flex flex-col justify-between space-y-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-wide truncate mb-3">${escapeHtml(item.title)}</h3>
+
+                    <div class="w-full h-48 rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#22222e] flex items-center justify-center">
+                        <img src="${img}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/22222a/94a3b8?text=Impian+Kamu';">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-2xl font-extrabold text-gray-900 dark:text-white">${formatCurrency(item.targetAmount, symbol)}</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">${formatCurrency(item.freqAmount, symbol)} ${escapeHtml(item.freqType || 'Perminggu')}</p>
+                        </div>
+                        <div class="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-14 h-14 transform -rotate-90">
+                                <circle cx="28" cy="28" r="22" class="stroke-gray-200 dark:stroke-[#282836]" stroke-width="4" fill="transparent" />
+                                <circle cx="28" cy="28" r="22" stroke="#3b82f6" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="${(138.23 - (138.23 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" class="transition-all duration-500 ease-out" />
                             </svg>
-                            <span class="absolute text-[11px] font-bold text-white">${pct}%</span>
+                            <span class="absolute text-[11px] font-bold text-gray-900 dark:text-white">${pct}%</span>
                         </div>
                     </div>
 
-                    <div class="border-t border-gray-800/80 mt-4 pt-3 flex items-center justify-between text-xs">
-                        <span class="text-gray-500 font-medium">Sisa Estimasi</span>
-                        <span class="font-semibold text-blue-400">${estimasiText}</span>
+                    <div class="border-t border-gray-100 dark:border-gray-800/80 mt-4 pt-3 flex items-center justify-between text-xs">
+                        <span class="text-gray-500 dark:text-gray-400 font-medium">Sisa Estimasi</span>
+                        <span class="font-semibold text-blue-600 dark:text-blue-400">${estimasiText}</span>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
 }
+
 
 // DETAIL PAGE RENDERING
 function openDetailView(id) {
