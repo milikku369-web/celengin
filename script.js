@@ -1,3 +1,22 @@
+// FIREBASE CONFIGURATION & INITIALIZATION
+const firebaseConfig = {
+    apiKey: "AIzaSyDVFoMedduyW951hA1a9FOpt4whm0NIFI",
+    authDomain: "tabungin-app-74a2f.firebaseapp.com",
+    projectId: "tabungin-app-74a2f",
+    storageBucket: "tabungin-app-74a2f.firebasestorage.app",
+    messagingSenderId: "291986020648",
+    appId: "1:291986020648:web:3f74bb239afc7e3872181d",
+    measurementId: "G-8X433506J"
+};
+
+// Inisialisasi Firebase & Firestore
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = (typeof firebase !== 'undefined' && firebase.firestore) ? firebase.firestore() : null;
+const COLLECTION_NAME = "user_savings";
+const USER_DOC_ID = "my_savings_data";
+
 // PRESET IMAGES
 const PRESET_IMAGES = {
     mac: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=80',
@@ -22,34 +41,67 @@ let editingTxId = null;
 let selectedTxIdForModal = null;
 
 // INITIALIZATION
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
-    loadStorage();
+    await loadStorage();
     renderHome();
 });
 
-// STORAGE MANAGEMENT
-function loadStorage() {
-    try {
-        const stored = localStorage.getItem('celenganku_app_data');
-        if (stored) {
-            savingsData = JSON.parse(stored);
+// STORAGE MANAGEMENT (LOCAL + CLOUD FIREBASE)
+async function loadStorage() {
+    let loadedFromCloud = false;
+
+    // Coba muat data dari Firebase Firestore terlebih dahulu
+    if (db) {
+        try {
+            const docRef = db.collection(COLLECTION_NAME).doc(USER_DOC_ID);
+            const docSnap = await docRef.get();
+
+            if (docSnap.exists && Array.isArray(docSnap.data().items)) {
+                savingsData = docSnap.data().items;
+                loadedFromCloud = true;
+            }
+        } catch (err) {
+            console.error("Gagal memuat data dari Firebase:", err);
         }
-        if (!savingsData || !Array.isArray(savingsData) || savingsData.length === 0) {
-            seedSampleData(false);
+    }
+
+    // Jika cloud tidak ada data/offline, gunakan LocalStorage
+    if (!loadedFromCloud) {
+        try {
+            const stored = localStorage.getItem('celenganku_app_data');
+            if (stored) {
+                savingsData = JSON.parse(stored);
+            }
+        } catch (err) {
+            console.error("Gagal memuat dari memori lokal", err);
         }
-    } catch (err) {
-        console.error("Failed to load storage", err);
+    }
+
+    if (!savingsData || !Array.isArray(savingsData) || savingsData.length === 0) {
         seedSampleData(false);
     }
 }
 
-function saveStorage() {
+async function saveStorage() {
+    // 1. Simpan ke LocalStorage HP
     try {
         localStorage.setItem('celenganku_app_data', JSON.stringify(savingsData));
     } catch (err) {
-        console.error("Failed to save storage", err);
-        showToast("Gagal menyimpan data ke memori!");
+        console.error("Gagal menyimpan ke memori lokal", err);
+    }
+
+    // 2. Sinkronkan secara online ke Firebase Firestore
+    if (db) {
+        try {
+            await db.collection(COLLECTION_NAME).doc(USER_DOC_ID).set({
+                items: savingsData,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (err) {
+            console.error("Gagal menyinkronkan ke cloud:", err);
+            showToast("Gagal menyimpan ke cloud!");
+        }
     }
 }
 
@@ -957,7 +1009,6 @@ function updateThemeUI(theme) {
         }
     }
 
-    // Backup listener untuk ikon tombol terpisah jika ada di HTML
     const iconElem = document.getElementById('themeIcon');
     const moonIcon = document.getElementById('themeMoonIcon');
     const sunIcon = document.getElementById('themeSunIcon');
