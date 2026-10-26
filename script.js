@@ -75,24 +75,45 @@ function switchAuthMode(mode) {
         if (tabLogin) tabLogin.className = activeClass;
         if (tabRegister) tabRegister.className = inactiveClass;
         if (title) title.innerText = "Masuk ke TABUNGin";
-        if (subtitle) subtitle.innerText = "Masukkan username akunmu yang sudah terdaftar.";
+        if (subtitle) subtitle.innerText = "Masukkan username dan kata sandi akunmu.";
         if (btn) btn.innerText = "Masuk ke Akun";
     } else {
         if (tabRegister) tabRegister.className = activeClass;
         if (tabLogin) tabLogin.className = inactiveClass;
         if (title) title.innerText = "Buat Akun Baru";
-        if (subtitle) subtitle.innerText = "Buat username baru untuk mulai menabung di cloud.";
+        if (subtitle) subtitle.innerText = "Buat username dan kata sandi untuk akun barumu.";
         if (btn) btn.innerText = "Daftar Akun Baru";
+    }
+}
+
+// TOGGLE SHOW/HIDE PASSWORD
+function togglePasswordVisibility() {
+    const passInput = document.getElementById('inputAuthPassword');
+    const passIcon = document.getElementById('togglePassIcon');
+    if (!passInput || !passIcon) return;
+
+    if (passInput.type === 'password') {
+        passInput.type = 'text';
+        passIcon.className = 'fa-solid fa-eye-slash text-xs text-blue-500';
+    } else {
+        passInput.type = 'password';
+        passIcon.className = 'fa-solid fa-eye text-xs';
     }
 }
 
 async function handleAuthSubmit(e) {
     if (e) e.preventDefault();
     const rawInput = document.getElementById('inputAuthUsername')?.value || "";
+    const password = document.getElementById('inputAuthPassword')?.value || "";
     const username = rawInput.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
     if (!username || username.length < 3) {
         showToast("Username minimal 3 karakter (huruf/angka/underscore)!");
+        return;
+    }
+
+    if (!password || password.length < 4) {
+        showToast("Kata sandi minimal 4 karakter!");
         return;
     }
 
@@ -106,12 +127,12 @@ async function handleAuthSubmit(e) {
         const docSnap = await docRef.get();
 
         if (currentAuthMode === 'register') {
-            // PROSES REGISTRASI AKUN BARU
+            // PROSES REGISTRASI AKUN BARU DENGAN PASSWORD
             if (docSnap.exists) {
                 showToast("Username sudah dipakai, pilih username lain!");
                 return;
             }
-            // Buat akun baru dengan data contoh awal
+            // Data bawaan awal untuk akun baru
             savingsData = [
                 {
                     id: 'savings-mac-001',
@@ -140,23 +161,35 @@ async function handleAuthSubmit(e) {
             ];
             await docRef.set({
                 username: username,
+                password: password,
                 items: savingsData,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             showToast(`Akun @${username} berhasil dibuat! 🎉`);
         } else {
-            // PROSES LOGIN AKUN LAMA
+            // PROSES LOGIN DENGAN VALIDASI PASSWORD
             if (!docSnap.exists) {
                 showToast("Username tidak ditemukan! Silakan klik 'Daftar Baru'");
                 return;
             }
-            savingsData = docSnap.data().items || [];
+
+            const userData = docSnap.data();
+            if (userData.password && userData.password !== password) {
+                showToast("Kata sandi / password salah!");
+                return;
+            }
+
+            savingsData = userData.items || [];
             showToast(`Selamat datang kembali, @${username}!`);
         }
 
         currentUser = username;
         localStorage.setItem('tabungin_username', currentUser);
         document.getElementById('modalUsername')?.classList.add('hidden');
+
+        if (document.getElementById('inputAuthPassword')) {
+            document.getElementById('inputAuthPassword').value = '';
+        }
 
         updateUserUI();
         renderHome();
@@ -1087,7 +1120,7 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// TEMA / LIGHT & DARK MODE MANAGEMENT (Bawaan Perangkat / Terang / Gelap)
+// TEMA / LIGHT & DARK MODE MANAGEMENT
 function initTheme() {
     const savedTheme = localStorage.getItem('app_theme') || 'system';
     applyTheme(savedTheme);
