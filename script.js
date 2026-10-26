@@ -576,21 +576,21 @@ function handleSaveSavings(e) {
         }
     } else {
         const newItem = {
-            id: 'savings-' + Date.now(),
-            title: title,
-            targetAmount: targetAmount,
-            freqAmount: freqAmount,
-            freqType: freqType,
-            currencyCode: cCode,
-            currencySymbol: cSymbol,
-            currencyFlag: cFlag,
-            imageUrl: imageUrl,
-            createdDate: formatDateOnlyNow(),
-            reminderTime: '12:00',
-            reminderFreq: 'Setiap Minggu',
-            reminderEnabled: true,
-            history: []
-        };
+    id: 'savings-' + Date.now(),
+    title: title,
+    targetAmount: targetAmount,
+    freqAmount: freqAmount,
+    freqType: freqType,
+    currencyCode: cCode,
+    currencySymbol: cSymbol,
+    currencyFlag: cFlag,
+    imageUrl: imageUrl,
+    createdDate: formatDateOnlyNow(),
+    reminderTime: '12:00',
+    reminderFreq: 'Setiap Minggu',
+    reminderEnabled: false, // <-- Ubah dari true jadi false di sini
+    history: []
+};
         savingsData.push(newItem);
         saveStorage();
         renderHome();
