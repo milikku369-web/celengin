@@ -139,13 +139,8 @@
                 </button>
             </div>
 
-            <!-- Mobile Floating Action Button (FAB) -->
-            <div class="fixed bottom-6 right-6 z-40">
-    <button onclick="openModalAddSavings()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-3.5 rounded-2xl shadow-2xl shadow-blue-600/40 flex items-center gap-2.5 text-sm transition transform active:scale-95">
-        <i class="fa-solid fa-plus text-base"></i>
-        <span>Tambah Tabungan</span>
-    </button>
-            </div>
+            
+            
         </div>
 
         <!-- ==================== VIEW 2: SAVINGS DETAIL PAGE ==================== -->
@@ -551,12 +546,19 @@
     </div>
 
 
+    
     <!-- ==================== TOAST NOTIFICATION ==================== -->
     <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#1e1e2a] border border-gray-700 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2.5 transition-all duration-300 opacity-0 pointer-events-none">
         <i id="toastIcon" class="fa-solid fa-circle-check text-blue-400 text-base"></i>
         <span id="toastMsg">Pesan Notifikasi</span>
     </div>
 
+    <div class="fixed bottom-6 right-6 z-50">
+        <button onclick="openModalAddSavings()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-3.5 rounded-2xl shadow-2xl shadow-blue-600/40 flex items-center gap-2.5 text-sm transition transform active:scale-95">
+            <i class="fa-solid fa-plus text-base"></i>
+            <span>Tambah Tabungan</span>
+        </button>
+    </div>
     <!-- External Script JS -->
     <script src="script.js"></script>
 </body>
