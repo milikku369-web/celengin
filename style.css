@@ -1,5 +1,8 @@
 :root {
     --accent-color: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-light-bg: rgba(59, 130, 246, 0.15);
+    --accent-border: rgba(59, 130, 246, 0.3);
 }
 
 body {
@@ -7,12 +10,40 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Custom CSS Akses Tema Warna Dinamis */
-.text-theme-accent {
-    color: var(--accent-color, #3b82f6) !important;
+/* MENIMPA WARNA TOMBOL UTAMA & ELEMEN BIRU SECARA KESELURUHAN */
+.bg-blue-600, 
+button.bg-blue-600,
+#fabAddSavings button {
+    background-color: var(--accent-color) !important;
 }
 
-/* Custom Scrollbar Utama Browser */
+.hover\:bg-blue-500:hover, 
+button.bg-blue-600:hover,
+#fabAddSavings button:hover {
+    background-color: var(--accent-hover) !important;
+}
+
+.text-blue-600, 
+.text-blue-500, 
+.text-blue-400,
+.text-theme-accent {
+    color: var(--accent-color) !important;
+}
+
+.border-blue-500, 
+.border-blue-600,
+.border-blue-300 {
+    border-color: var(--accent-color) !important;
+}
+
+.bg-blue-100,
+.bg-blue-50,
+.bg-blue-600\/20,
+.dark\:bg-blue-600\/30 {
+    background-color: var(--accent-light-bg) !important;
+}
+
+/* Custom Scrollbar Utama */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -25,10 +56,9 @@ body {
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-color, #3b82f6);
+    background: var(--accent-color);
 }
 
-/* Class untuk Sembunyikan Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -37,18 +67,11 @@ body {
     scrollbar-width: none;
 }
 
-/* Animasi Smooth Fade In */
 .animate-fade-in {
     animation: fadeIn 0.25s ease-out forwards;
 }
 
 @keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(8px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
