@@ -640,6 +640,11 @@ function renderHome() {
             </div>
         `;
     }).join('');
+
+    // Re-apply warna aksen pada elemen grafik SVG
+    if (typeof changeAccentColor === 'function') {
+        changeAccentColor(currentAccentColor, false);
+    }
 }
 
 // DETAIL PAGE RENDERING
@@ -687,6 +692,10 @@ function openDetailView(id) {
 
     renderDetailHistory(item);
     showView('detail');
+
+    if (typeof changeAccentColor === 'function') {
+        changeAccentColor(currentAccentColor, false);
+    }
 }
 
 function renderDetailHistory(item) {
@@ -1222,7 +1231,7 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// FITUR BARU 1: PENGATURAN FONT DAN TEMA WARNA (MERAH, KUNING, HIJAU, BIRU)
+// FITUR BARU 1: PENGATURAN FONT DAN TEMA WARNA DINAMIS
 function initFontAndColor() {
     changeFont(currentFont, false);
     changeAccentColor(currentAccentColor, false);
@@ -1245,17 +1254,40 @@ function changeAccentColor(color, notify = true) {
     localStorage.setItem('tabungin_accent_color', color);
 
     const colorMap = {
-        blue: { text: '#3b82f6' },
-        red: { text: '#f43f5e' },
-        yellow: { text: '#f59e0b' },
-        green: { text: '#10b981' }
+        blue: { 
+            main: '#3b82f6', 
+            hover: '#2563eb', 
+            lightBg: 'rgba(59, 130, 246, 0.15)' 
+        },
+        red: { 
+            main: '#f43f5e', 
+            hover: '#e11d48', 
+            lightBg: 'rgba(244, 63, 94, 0.15)' 
+        },
+        yellow: { 
+            main: '#f59e0b', 
+            hover: '#d97706', 
+            lightBg: 'rgba(245, 158, 11, 0.15)' 
+        },
+        green: { 
+            main: '#10b981', 
+            hover: '#059669', 
+            lightBg: 'rgba(16, 185, 129, 0.15)' 
+        }
     };
 
     const activeColor = colorMap[color] || colorMap.blue;
-    document.documentElement.style.setProperty('--accent-color', activeColor.text);
+    
+    // Set variabel CSS global di root
+    document.documentElement.style.setProperty('--accent-color', activeColor.main);
+    document.documentElement.style.setProperty('--accent-hover', activeColor.hover);
+    document.documentElement.style.setProperty('--accent-light-bg', activeColor.lightBg);
 
-    const accents = document.querySelectorAll('.text-theme-accent');
-    accents.forEach(el => el.style.color = activeColor.text);
+    // Update elemen grafik SVG lingkaran secara langsung jika ada
+    const circles = document.querySelectorAll('circle#detailCircleProgress, svg circle.text-theme-accent');
+    circles.forEach(circle => {
+        circle.setAttribute('stroke', activeColor.main);
+    });
 
     if (notify) showToast(`Warna tema diubah ke ${color}`);
 }
