@@ -265,7 +265,7 @@ async function handleAuthSubmit(e) {
             document.getElementById('inputAuthPassword').value = '';
         }
 
-        saveStorage();
+        await saveStorage();
         updateUserUI();
         renderHome();
     } catch (err) {
@@ -342,16 +342,18 @@ async function saveStorage() {
     const localKey = currentUser ? `celenganku_data_${currentUser}` : `celenganku_data_guest`;
 
     try {
-        localStorage.setItem(localKey, JSON.stringify(savingsData));
+        const cleanData = JSON.parse(JSON.stringify(savingsData));
+        localStorage.setItem(localKey, JSON.stringify(cleanData));
     } catch (err) {
         console.error("Gagal menyimpan ke memori lokal", err);
     }
 
     if (currentUser && db) {
         try {
+            const cleanData = JSON.parse(JSON.stringify(savingsData));
             await db.collection(COLLECTION_NAME).doc(currentUser).set({
                 username: currentUser,
-                items: savingsData,
+                items: cleanData,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
         } catch (err) {
@@ -361,7 +363,7 @@ async function saveStorage() {
     }
 }
 
-function seedSampleData(notify = true) {
+async function seedSampleData(notify = true) {
     savingsData = [
         {
             id: 'savings-mac-001',
@@ -388,15 +390,15 @@ function seedSampleData(notify = true) {
             ]
         }
     ];
-    saveStorage();
+    await saveStorage();
     renderHome();
     if (currentDetailId) openDetailView(currentDetailId);
     if (notify) showToast("Data contoh berhasil dimuat");
 }
 
-function clearAllData() {
+async function clearAllData() {
     savingsData = [];
-    saveStorage();
+    await saveStorage();
     showView('home');
     renderHome();
     showToast("Semua data berhasil dihapus");
@@ -864,7 +866,7 @@ function closeModalSavings() {
     document.getElementById('modalSavings')?.classList.add('hidden');
 }
 
-function handleSaveSavings(e) {
+async function handleSaveSavings(e) {
     if (e) e.preventDefault();
     const getVal = (id) => document.getElementById(id)?.value || "";
 
@@ -891,7 +893,7 @@ function handleSaveSavings(e) {
             item.currencySymbol = cSymbol;
             item.currencyFlag = cFlag;
             item.imageUrl = imageUrl;
-            saveStorage();
+            await saveStorage();
             openDetailView(id);
             showToast("Celengan berhasil diperbarui");
         }
@@ -913,7 +915,7 @@ function handleSaveSavings(e) {
             history: []
         };
         savingsData.push(newItem);
-        saveStorage();
+        await saveStorage();
         renderHome();
         showToast("Celengan baru ditambahkan");
     }
@@ -981,7 +983,7 @@ function setTxChipAmount(val) {
     if (elem) elem.value = formatDots(val);
 }
 
-function handleSaveTransaction(e) {
+async function handleSaveTransaction(e) {
     if (e) e.preventDefault();
     if (!currentDetailId) return;
 
@@ -1016,7 +1018,7 @@ function handleSaveTransaction(e) {
         item.history.push(newTx);
     }
 
-    saveStorage();
+    await saveStorage();
     closeModalTransaction();
     openDetailView(item.id);
     renderHome();
@@ -1111,14 +1113,14 @@ function handleEditTxFromModal() {
     document.getElementById('modalTransaction')?.classList.remove('hidden');
 }
 
-function handleDeleteTxFromModal() {
+async function handleDeleteTxFromModal() {
     if (!currentDetailId || !selectedTxIdForModal) return;
 
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item || !item.history) return;
 
     item.history = item.history.filter(t => t.id !== selectedTxIdForModal);
-    saveStorage();
+    await saveStorage();
 
     closeModalTxDetail();
     openDetailView(item.id);
@@ -1163,7 +1165,7 @@ function closeModalReminder() {
     document.getElementById('modalReminder')?.classList.add('hidden');
 }
 
-function handleSaveReminder(e) {
+async function handleSaveReminder(e) {
     if (e) e.preventDefault();
     if (!currentDetailId) return;
 
@@ -1178,19 +1180,19 @@ function handleSaveReminder(e) {
         Notification.requestPermission();
     }
 
-    saveStorage();
+    await saveStorage();
     closeModalReminder();
     openDetailView(item.id);
     showToast("Pengaturan pengingat disimpan ⏰");
 }
 
-function toggleReminderState(enabled) {
+async function toggleReminderState(enabled) {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
     item.reminderEnabled = enabled;
-    saveStorage();
+    await saveStorage();
     showToast(enabled ? "Pengingat diaktifkan ⏰" : "Pengingat dinonaktifkan");
 }
 
@@ -1203,10 +1205,10 @@ function closeConfirmDelete() {
     document.getElementById('modalConfirmDelete')?.classList.add('hidden');
 }
 
-function executeDeleteSavings() {
+async function executeDeleteSavings() {
     if (!currentDetailId) return;
     savingsData = savingsData.filter(s => s.id !== currentDetailId);
-    saveStorage();
+    await saveStorage();
     closeConfirmDelete();
     showView('home');
     showToast("Celengan berhasil dihapus");
