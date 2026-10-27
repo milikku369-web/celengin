@@ -363,7 +363,7 @@ function seedSampleData(notify = true) {
     savingsData = [
         {
             id: 'savings-mac-001',
-            title: 'Beli MAC (Contoh saja)',
+            title: 'Beli MAC (Hanya Contoh)',
             targetAmount: 13500000,
             freqAmount: 50000,
             freqType: 'Perminggu',
