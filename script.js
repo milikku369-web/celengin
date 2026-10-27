@@ -43,7 +43,7 @@ let selectedTxIdForModal = null;
 let currentUser = localStorage.getItem('tabungin_username') || '';
 let currentAuthMode = 'login';
 
-// FITUR BARU 1: PREFERENSI TAMPILAN (FONT & WARNA TEMA)
+// PREFERENSI TAMPILAN (FONT & WARNA TEMA)
 let currentFont = localStorage.getItem('tabungin_font') || 'sans';
 let currentAccentColor = localStorage.getItem('tabungin_accent_color') || 'blue';
 
@@ -284,7 +284,6 @@ function handleLogout() {
     showToast("Kamu kembali ke Mode Guest (Tamu)");
 }
 
-// FITUR BARU 3: UPDATE BANNER GUEST & USER UI
 function updateUserUI() {
     const label = document.getElementById('currentUsernameLabel');
     const loginBtn = document.getElementById('menuLoginBtn');
@@ -1128,7 +1127,7 @@ function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
-// FITUR BARU 2: NOTIFIKASI BROWSER
+// BROWSER NOTIFICATION HELPER
 function initBrowserNotifications() {
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
@@ -1231,7 +1230,7 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// FITUR BARU 1: PENGATURAN FONT DAN TEMA WARNA DINAMIS
+// PENGATURAN FONT DAN TEMA WARNA DINAMIS
 function initFontAndColor() {
     changeFont(currentFont, false);
     changeAccentColor(currentAccentColor, false);
@@ -1241,10 +1240,23 @@ function changeFont(fontName, notify = true) {
     currentFont = fontName;
     localStorage.setItem('tabungin_font', fontName);
     
+    // Ganti kelas font pada body
     document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
     if (fontName === 'serif') document.body.classList.add('font-serif');
     else if (fontName === 'mono') document.body.classList.add('font-mono');
     else document.body.classList.add('font-sans');
+
+    // Update tampilan highlight/active kotak tombol pilihan font
+    const btnSans = document.getElementById('btnFontSans');
+    const btnSerif = document.getElementById('btnFontSerif');
+    const btnMono = document.getElementById('btnFontMono');
+
+    const activeClass = "flex-1 py-1 rounded-lg text-[10px] font-medium bg-white dark:bg-[#282838] text-theme-accent shadow transition";
+    const inactiveClass = "flex-1 py-1 rounded-lg text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition";
+
+    if (btnSans) btnSans.className = fontName === 'sans' ? activeClass + " font-sans" : inactiveClass + " font-sans";
+    if (btnSerif) btnSerif.className = fontName === 'serif' ? activeClass + " font-serif" : inactiveClass + " font-serif";
+    if (btnMono) btnMono.className = fontName === 'mono' ? activeClass + " font-mono" : inactiveClass + " font-mono";
 
     if (notify) showToast(`Font diubah ke ${fontName}`);
 }
