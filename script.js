@@ -9,14 +9,12 @@ const firebaseConfig = {
     measurementId: "G-8X433506J"
 };
 
-// Inisialisasi Firebase, Firestore & Messaging
+// Inisialisasi Firebase & Firestore
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = (typeof firebase !== 'undefined' && firebase.firestore) ? firebase.firestore() : null;
-const messaging = (typeof firebase !== 'undefined' && firebase.messaging) ? firebase.messaging() : null;
 const COLLECTION_NAME = "user_savings";
-const VAPID_KEY = "BK4GH9kRcJiL76JbFST4Dl25kacd6m_6Ndm8lA3ir23c689rbOtiuALphkXCrLE_ok2pQVawdZyDmuq6Ve-sQ44";
 
 // PRESET IMAGES
 const PRESET_IMAGES = {
@@ -1134,7 +1132,7 @@ function handleEditTxFromModal() {
     const chipR = document.getElementById('chipRemaining');
     if (chipR) {
         chipR.innerText = `${formatDots(kekurang)}`;
-        chipR.onclick = () => setTxTxChipAmount(kekurang);
+        chipR.onclick = () => setTxChipAmount(kekurang);
     }
 
     document.getElementById('modalTransaction')?.classList.remove('hidden');
@@ -1156,17 +1154,8 @@ function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
-// FIREBASE CLOUD MESSAGING & BROWSER NOTIFICATIONS
-async function initBrowserNotifications() {
-    if ('serviceWorker' in navigator && messaging) {
-        try {
-            const reg = await navigator.serviceWorker.register('firebase-messaging-sw.js');
-            console.log('Firebase Service Worker Aktif!', reg);
-        } catch (err) {
-            console.error('Gagal mendaftarkan Firebase SW:', err);
-        }
-    }
-
+// BROWSER NOTIFICATIONS & ONESIGNAL HANDLER
+function initBrowserNotifications() {
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
     }
@@ -1216,24 +1205,11 @@ async function handleSaveReminder(e) {
     item.reminderFreq = freqVal;
     item.reminderEnabled = isEnabled;
 
-    if (isEnabled && messaging) {
-        try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
-                if (currentToken) {
-                    item.fcmToken = currentToken;
-                    // MENAMPILKAN POP-UP TEKS BERISI KODE TOKEN LANGSUNG DI LAYAR HP
-                    alert("TOKEN FCM KAMU BERHASIL DIDAPAT:\n\n" + currentToken);
-                } else {
-                    alert("Gagal mengambil token. Pastikan izin notifikasi diizinkan!");
-                }
-            } else {
-                alert("Izin notifikasi ditolak oleh browser!");
-            }
-        } catch (err) {
-            alert("Error FCM: " + err.message);
-        }
+    if (isEnabled) {
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(function(OneSignal) {
+            OneSignal.Notifications.requestPermission();
+        });
     }
 
     saveStorage();
