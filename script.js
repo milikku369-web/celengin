@@ -9,12 +9,14 @@ const firebaseConfig = {
     measurementId: "G-8X433506J"
 };
 
-// Inisialisasi Firebase & Firestore
+// Inisialisasi Firebase, Firestore & Messaging
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = (typeof firebase !== 'undefined' && firebase.firestore) ? firebase.firestore() : null;
+const messaging = (typeof firebase !== 'undefined' && firebase.messaging) ? firebase.messaging() : null;
 const COLLECTION_NAME = "user_savings";
+const VAPID_KEY = "BK4GH9kRcJiL76JbFST4Dl25kacd6m_6Ndm8lA3ir23c689rbOtiuALphkXCrLE_ok2pQVawdZyDmuq6Ve-sQ44";
 
 // PRESET IMAGES
 const PRESET_IMAGES = {
@@ -751,7 +753,6 @@ function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // 1. Validasi Ukuran File (Maksimal 1 MB)
     const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
     if (file.size > MAX_FILE_SIZE) {
         showToast("Ukuran foto terlalu besar! Maksimal 1 MB.");
@@ -759,13 +760,12 @@ function handleFileSelect(e) {
         return;
     }
 
-    // 2. Kompresi gambar via HTML5 Canvas
     const reader = new FileReader();
     reader.onload = function(evt) {
         const img = new Image();
         img.onload = function() {
             const canvas = document.createElement('canvas');
-            const maxDimension = 800; // Maksimal resolusi 800px
+            const maxDimension = 800;
             let width = img.width;
             let height = img.height;
 
@@ -787,7 +787,6 @@ function handleFileSelect(e) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Kompres ke JPEG 70% (~30KB - 80KB)
             const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
             const inputImg = document.getElementById('inputImage');
@@ -1157,12 +1156,15 @@ function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
-// BROWSER NOTIFICATION & SERVICE WORKER HELPER
-function initBrowserNotifications() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker Notifikasi Aktif!', reg))
-            .catch(err => console.error('Gagal registrasi Service Worker:', err));
+// FIREBASE CLOUD MESSAGING & BROWSER NOTIFICATIONS
+async function initBrowserNotifications() {
+    if ('serviceWorker' in navigator && messaging) {
+        try {
+            const reg = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+            console.log('Firebase Service Worker Aktif!', reg);
+        } catch (err) {
+            console.error('Gagal mendaftarkan Firebase SW:', err);
+        }
     }
 
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -1172,19 +1174,10 @@ function initBrowserNotifications() {
 
 function sendBrowserNotification(title, body) {
     if ("Notification" in window && Notification.permission === "granted") {
-        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-                type: 'SCHEDULE_NOTIFICATION',
-                title: title,
-                body: body,
-                delay: 0
-            });
-        } else {
-            new Notification(title, {
-                body: body,
-                icon: 'https://cdn-icons-png.flaticon.com/512/2953/2953361.png'
-            });
-        }
+        new Notification(title, {
+            body: body,
+            icon: 'https://cdn-icons-png.flaticon.com/512/2953/2953361.png'
+        });
     }
 }
 
@@ -1208,7 +1201,7 @@ function closeModalReminder() {
     document.getElementById('modalReminder')?.classList.add('hidden');
 }
 
-function handleSaveReminder(e) {
+async function handleSaveReminder(e) {
     if (e) e.preventDefault();
     if (!currentDetailId) return;
 
@@ -1223,36 +1216,25 @@ function handleSaveReminder(e) {
     item.reminderFreq = freqVal;
     item.reminderEnabled = isEnabled;
 
-    if (isEnabled && "Notification" in window) {
-        Notification.requestPermission().then(permission => {
+    if (isEnabled && messaging) {
+        try {
+            const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                const [targetHour, targetMin] = timeVal.split(':').map(Number);
-                const now = new Date();
-                const targetTime = new Date();
-                targetTime.setHours(targetHour, targetMin, 0, 0);
-
-                if (targetTime <= now) {
-                    targetTime.setDate(targetTime.getDate() + 1);
-                }
-
-                const delay = targetTime.getTime() - now.getTime();
-
-                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({
-                        type: 'SCHEDULE_NOTIFICATION',
-                        title: `Waktunya Menabung! 🐷`,
-                        body: `Jangan lupa sisihkan tabungan untuk target "${item.title}" hari ini!`,
-                        delay: delay
-                    });
+                const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
+                if (currentToken) {
+                    item.fcmToken = currentToken;
+                    console.log('FCM Token Perangkat:', currentToken);
                 }
             }
-        });
+        } catch (err) {
+            console.error('Gagal mengambil FCM Token:', err);
+        }
     }
 
     saveStorage();
     closeModalReminder();
     openDetailView(item.id);
-    showToast(isEnabled ? "Pengingat berhasil dijadwalkan! ⏰" : "Pengingat disimpan (nonaktif)");
+    showToast(isEnabled ? "Pengingat Cloud Aktif! ⏰" : "Pengingat disimpan (nonaktif)");
 }
 
 function toggleReminderState(enabled) {
@@ -1335,26 +1317,10 @@ function changeAccentColor(color, notify = true) {
     localStorage.setItem('tabungin_accent_color', color);
 
     const colorMap = {
-        blue: { 
-            main: '#3b82f6', 
-            hover: '#2563eb', 
-            lightBg: 'rgba(59, 130, 246, 0.15)' 
-        },
-        red: { 
-            main: '#f43f5e', 
-            hover: '#e11d48', 
-            lightBg: 'rgba(244, 63, 94, 0.15)' 
-        },
-        yellow: { 
-            main: '#f59e0b', 
-            hover: '#d97706', 
-            lightBg: 'rgba(245, 158, 11, 0.15)' 
-        },
-        green: { 
-            main: '#10b981', 
-            hover: '#059669', 
-            lightBg: 'rgba(16, 185, 129, 0.15)' 
-        }
+        blue: { main: '#3b82f6', hover: '#2563eb', lightBg: 'rgba(59, 130, 246, 0.15)' },
+        red: { main: '#f43f5e', hover: '#e11d48', lightBg: 'rgba(244, 63, 94, 0.15)' },
+        yellow: { main: '#f59e0b', hover: '#d97706', lightBg: 'rgba(245, 158, 11, 0.15)' },
+        green: { main: '#10b981', hover: '#059669', lightBg: 'rgba(16, 185, 129, 0.15)' }
     };
 
     const activeColor = colorMap[color] || colorMap.blue;
