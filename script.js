@@ -1206,16 +1206,52 @@ async function handleSaveReminder(e) {
     item.reminderEnabled = isEnabled;
 
     if (isEnabled) {
+        // 1. Minta Izin Notifikasi OneSignal
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(function(OneSignal) {
             OneSignal.Notifications.requestPermission();
         });
+
+        // 2. Hitung Jam Target Pengingat Hari Ini / Besok
+        const [targetHours, targetMinutes] = timeVal.split(':').map(Number);
+        const now = new Date();
+        let scheduledDate = new Date();
+        scheduledDate.setHours(targetHours, targetMinutes, 0, 0);
+
+        // Jika jam yang dipilih sudah lewat hari ini, jadwalkan untuk besok
+        if (scheduledDate <= now) {
+            scheduledDate.setDate(scheduledDate.getDate() + 1);
+        }
+
+        // 3. Tembak REST API OneSignal untuk Buat Jadwal Cloud Otomatis
+        const ONESIGNAL_APP_ID = "0e5957d5-5a71-4e6c-a97b-317604fe8e94";
+        const ONESIGNAL_REST_KEY = "os_v2_app_bzmvpvk2ofhgzkl3gf3aj7uosqku4f3o7efuzpmnnwxmvimwosbyao2cjlcbntl3yosu2duioff7hak7biyu33kqcrtlihddhpgwhfy";
+
+        try {
+            await fetch("https://onesignal.com/api/v1/notifications", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": `Basic ${ONESIGNAL_REST_KEY}`
+                },
+                body: JSON.stringify({
+                    app_id: ONESIGNAL_APP_ID,
+                    included_segments: ["Subscribed Users"],
+                    headings: { en: "Waktunya Menabung! 🐷" },
+                    contents: { en: `Yuk sisihkan tabungan untuk target "${item.title}" hari ini!` },
+                    send_after: scheduledDate.toISOString()
+                })
+            });
+            showToast("Pengingat Cloud Otomatis Dijadwalkan! ⏰");
+        } catch (err) {
+            console.error("Gagal menjadwalkan notifikasi cloud:", err);
+        }
     }
 
     saveStorage();
     closeModalReminder();
     openDetailView(item.id);
-    showToast(isEnabled ? "Pengingat Cloud Aktif! ⏰" : "Pengingat disimpan (nonaktif)");
+    showToast(isEnabled ? "Pengingat Aktif! ⏰" : "Pengingat disimpan (nonaktif)");
 }
 
 function toggleReminderState(enabled) {
