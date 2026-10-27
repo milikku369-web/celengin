@@ -1157,8 +1157,14 @@ function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
-// BROWSER NOTIFICATION HELPER
+// BROWSER NOTIFICATION & SERVICE WORKER HELPER
 function initBrowserNotifications() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker Notifikasi Aktif!', reg))
+            .catch(err => console.error('Gagal registrasi Service Worker:', err));
+    }
+
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
     }
@@ -1166,10 +1172,19 @@ function initBrowserNotifications() {
 
 function sendBrowserNotification(title, body) {
     if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(title, {
-            body: body,
-            icon: 'https://cdn-icons-png.flaticon.com/512/2953/2953361.png'
-        });
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'SCHEDULE_NOTIFICATION',
+                title: title,
+                body: body,
+                delay: 0
+            });
+        } else {
+            new Notification(title, {
+                body: body,
+                icon: 'https://cdn-icons-png.flaticon.com/512/2953/2953361.png'
+            });
+        }
     }
 }
 
@@ -1200,18 +1215,44 @@ function handleSaveReminder(e) {
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
-    item.reminderTime = document.getElementById('inputReminderTime')?.value || '12:00';
-    item.reminderFreq = document.getElementById('inputReminderFreq')?.value || 'Setiap Minggu';
-    item.reminderEnabled = document.getElementById('inputReminderActive')?.checked !== false;
+    const timeVal = document.getElementById('inputReminderTime')?.value || '12:00';
+    const freqVal = document.getElementById('inputReminderFreq')?.value || 'Setiap Minggu';
+    const isEnabled = document.getElementById('inputReminderActive')?.checked !== false;
 
-    if (item.reminderEnabled && "Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
+    item.reminderTime = timeVal;
+    item.reminderFreq = freqVal;
+    item.reminderEnabled = isEnabled;
+
+    if (isEnabled && "Notification" in window) {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                const [targetHour, targetMin] = timeVal.split(':').map(Number);
+                const now = new Date();
+                const targetTime = new Date();
+                targetTime.setHours(targetHour, targetMin, 0, 0);
+
+                if (targetTime <= now) {
+                    targetTime.setDate(targetTime.getDate() + 1);
+                }
+
+                const delay = targetTime.getTime() - now.getTime();
+
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'SCHEDULE_NOTIFICATION',
+                        title: `Waktunya Menabung! 🐷`,
+                        body: `Jangan lupa sisihkan tabungan untuk target "${item.title}" hari ini!`,
+                        delay: delay
+                    });
+                }
+            }
+        });
     }
 
     saveStorage();
     closeModalReminder();
     openDetailView(item.id);
-    showToast("Pengaturan pengingat disimpan ⏰");
+    showToast(isEnabled ? "Pengingat berhasil dijadwalkan! ⏰" : "Pengingat disimpan (nonaktif)");
 }
 
 function toggleReminderState(enabled) {
