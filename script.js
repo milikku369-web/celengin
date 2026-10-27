@@ -265,7 +265,7 @@ async function handleAuthSubmit(e) {
             document.getElementById('inputAuthPassword').value = '';
         }
 
-        await saveStorage();
+        saveStorage();
         updateUserUI();
         renderHome();
     } catch (err) {
@@ -338,32 +338,28 @@ async function loadStorage() {
     renderHome();
 }
 
-async function saveStorage() {
+// SIMPAN SECARA INSTAN TANPA MEMBLOKIR UI
+function saveStorage() {
     const localKey = currentUser ? `celenganku_data_${currentUser}` : `celenganku_data_guest`;
 
     try {
-        const cleanData = JSON.parse(JSON.stringify(savingsData));
-        localStorage.setItem(localKey, JSON.stringify(cleanData));
+        localStorage.setItem(localKey, JSON.stringify(savingsData));
     } catch (err) {
         console.error("Gagal menyimpan ke memori lokal", err);
     }
 
     if (currentUser && db) {
-        try {
-            const cleanData = JSON.parse(JSON.stringify(savingsData));
-            await db.collection(COLLECTION_NAME).doc(currentUser).set({
-                username: currentUser,
-                items: cleanData,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-        } catch (err) {
+        db.collection(COLLECTION_NAME).doc(currentUser).set({
+            username: currentUser,
+            items: savingsData,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(err => {
             console.error("Gagal menyinkronkan ke cloud:", err);
-            showToast("Gagal menyinkronkan ke cloud!");
-        }
+        });
     }
 }
 
-async function seedSampleData(notify = true) {
+function seedSampleData(notify = true) {
     savingsData = [
         {
             id: 'savings-mac-001',
@@ -390,15 +386,15 @@ async function seedSampleData(notify = true) {
             ]
         }
     ];
-    await saveStorage();
+    saveStorage();
     renderHome();
     if (currentDetailId) openDetailView(currentDetailId);
     if (notify) showToast("Data contoh berhasil dimuat");
 }
 
-async function clearAllData() {
+function clearAllData() {
     savingsData = [];
-    await saveStorage();
+    saveStorage();
     showView('home');
     renderHome();
     showToast("Semua data berhasil dihapus");
@@ -642,7 +638,6 @@ function renderHome() {
         `;
     }).join('');
 
-    // Re-apply warna aksen pada elemen grafik SVG
     if (typeof changeAccentColor === 'function') {
         changeAccentColor(currentAccentColor, false);
     }
@@ -733,7 +728,7 @@ function renderDetailHistory(item) {
     }).join('');
 }
 
-// LIVE PREVIEW & FILE UPLOAD
+// LIVE PREVIEW & AUTOMATIC COMPRESSION (MAX 1MB)
 function updateLivePreview(url) {
     const previewImg = document.getElementById('modalImgPreview');
     const placeholder = document.getElementById('modalImgPlaceholder');
@@ -751,22 +746,55 @@ function updateLivePreview(url) {
     }
 }
 
+// VALIDASI MAKSIMAL 1MB & KOMPRESI OTOMATIS
 function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 2.5 * 1024 * 1024) {
-        showToast("Ukuran foto maksimal 2.5MB!");
+    // 1. Validasi Ukuran File (Maksimal 1 MB)
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
+    if (file.size > MAX_FILE_SIZE) {
+        showToast("Ukuran foto terlalu besar! Maksimal 1 MB.");
         e.target.value = "";
         return;
     }
 
+    // 2. Kompresi gambar via HTML5 Canvas
     const reader = new FileReader();
     reader.onload = function(evt) {
-        const base64Str = evt.target.result;
-        const inputImg = document.getElementById('inputImage');
-        if (inputImg) inputImg.value = base64Str;
-        updateLivePreview(base64Str);
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const maxDimension = 800; // Maksimal resolusi 800px
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > maxDimension) {
+                    height = Math.round((height * maxDimension) / width);
+                    width = maxDimension;
+                }
+            } else {
+                if (height > maxDimension) {
+                    width = Math.round((width * maxDimension) / height);
+                    height = maxDimension;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Kompres ke JPEG 70% (~30KB - 80KB)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+            const inputImg = document.getElementById('inputImage');
+            if (inputImg) inputImg.value = compressedBase64;
+            updateLivePreview(compressedBase64);
+        };
+        img.src = evt.target.result;
     };
     reader.readAsDataURL(file);
 }
@@ -866,7 +894,7 @@ function closeModalSavings() {
     document.getElementById('modalSavings')?.classList.add('hidden');
 }
 
-async function handleSaveSavings(e) {
+function handleSaveSavings(e) {
     if (e) e.preventDefault();
     const getVal = (id) => document.getElementById(id)?.value || "";
 
@@ -893,7 +921,7 @@ async function handleSaveSavings(e) {
             item.currencySymbol = cSymbol;
             item.currencyFlag = cFlag;
             item.imageUrl = imageUrl;
-            await saveStorage();
+            saveStorage();
             openDetailView(id);
             showToast("Celengan berhasil diperbarui");
         }
@@ -915,7 +943,7 @@ async function handleSaveSavings(e) {
             history: []
         };
         savingsData.push(newItem);
-        await saveStorage();
+        saveStorage();
         renderHome();
         showToast("Celengan baru ditambahkan");
     }
@@ -983,7 +1011,7 @@ function setTxChipAmount(val) {
     if (elem) elem.value = formatDots(val);
 }
 
-async function handleSaveTransaction(e) {
+function handleSaveTransaction(e) {
     if (e) e.preventDefault();
     if (!currentDetailId) return;
 
@@ -1018,7 +1046,7 @@ async function handleSaveTransaction(e) {
         item.history.push(newTx);
     }
 
-    await saveStorage();
+    saveStorage();
     closeModalTransaction();
     openDetailView(item.id);
     renderHome();
@@ -1113,14 +1141,14 @@ function handleEditTxFromModal() {
     document.getElementById('modalTransaction')?.classList.remove('hidden');
 }
 
-async function handleDeleteTxFromModal() {
+function handleDeleteTxFromModal() {
     if (!currentDetailId || !selectedTxIdForModal) return;
 
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item || !item.history) return;
 
     item.history = item.history.filter(t => t.id !== selectedTxIdForModal);
-    await saveStorage();
+    saveStorage();
 
     closeModalTxDetail();
     openDetailView(item.id);
@@ -1165,7 +1193,7 @@ function closeModalReminder() {
     document.getElementById('modalReminder')?.classList.add('hidden');
 }
 
-async function handleSaveReminder(e) {
+function handleSaveReminder(e) {
     if (e) e.preventDefault();
     if (!currentDetailId) return;
 
@@ -1180,19 +1208,19 @@ async function handleSaveReminder(e) {
         Notification.requestPermission();
     }
 
-    await saveStorage();
+    saveStorage();
     closeModalReminder();
     openDetailView(item.id);
     showToast("Pengaturan pengingat disimpan ⏰");
 }
 
-async function toggleReminderState(enabled) {
+function toggleReminderState(enabled) {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
     item.reminderEnabled = enabled;
-    await saveStorage();
+    saveStorage();
     showToast(enabled ? "Pengingat diaktifkan ⏰" : "Pengingat dinonaktifkan");
 }
 
@@ -1205,10 +1233,10 @@ function closeConfirmDelete() {
     document.getElementById('modalConfirmDelete')?.classList.add('hidden');
 }
 
-async function executeDeleteSavings() {
+function executeDeleteSavings() {
     if (!currentDetailId) return;
     savingsData = savingsData.filter(s => s.id !== currentDetailId);
-    await saveStorage();
+    saveStorage();
     closeConfirmDelete();
     showView('home');
     showToast("Celengan berhasil dihapus");
@@ -1242,13 +1270,11 @@ function changeFont(fontName, notify = true) {
     currentFont = fontName;
     localStorage.setItem('tabungin_font', fontName);
     
-    // Ganti kelas font pada body
     document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
     if (fontName === 'serif') document.body.classList.add('font-serif');
     else if (fontName === 'mono') document.body.classList.add('font-mono');
     else document.body.classList.add('font-sans');
 
-    // Update tampilan highlight/active kotak tombol pilihan font
     const btnSans = document.getElementById('btnFontSans');
     const btnSerif = document.getElementById('btnFontSerif');
     const btnMono = document.getElementById('btnFontMono');
@@ -1292,12 +1318,10 @@ function changeAccentColor(color, notify = true) {
 
     const activeColor = colorMap[color] || colorMap.blue;
     
-    // Set variabel CSS global di root
     document.documentElement.style.setProperty('--accent-color', activeColor.main);
     document.documentElement.style.setProperty('--accent-hover', activeColor.hover);
     document.documentElement.style.setProperty('--accent-light-bg', activeColor.lightBg);
 
-    // Update elemen grafik SVG lingkaran secara langsung jika ada
     const circles = document.querySelectorAll('circle#detailCircleProgress, svg circle.text-theme-accent');
     circles.forEach(circle => {
         circle.setAttribute('stroke', activeColor.main);
