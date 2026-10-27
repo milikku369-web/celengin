@@ -209,7 +209,7 @@ async function handleAuthSubmit(e) {
                 savingsData = [
                     {
                         id: 'savings-mac-001',
-                        title: 'tabungan MAC',
+                        title: 'Beli MAC (Hanya Contoh)',
                         targetAmount: 13500000,
                         freqAmount: 50000,
                         freqType: 'Perminggu',
