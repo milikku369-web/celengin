@@ -1,11 +1,18 @@
+:root {
+    --accent-color: #3b82f6;
+}
+
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #0d0d0f;
-    color: #f3f4f6;
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Custom Scrollbar */
+/* Custom CSS Akses Tema Warna Dinamis */
+.text-theme-accent {
+    color: var(--accent-color, #3b82f6) !important;
+}
+
+/* Custom Scrollbar Utama Browser */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -18,22 +25,30 @@ body {
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #3b82f6;
+    background: var(--accent-color, #3b82f6);
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.25s ease-out forwards;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
+/* Class untuk Sembunyikan Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
 .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+/* Animasi Smooth Fade In */
+.animate-fade-in {
+    animation: fadeIn 0.25s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(8px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }
