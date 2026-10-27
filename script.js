@@ -43,13 +43,19 @@ let selectedTxIdForModal = null;
 let currentUser = localStorage.getItem('tabungin_username') || '';
 let currentAuthMode = 'login';
 
+// FITUR BARU 1: PREFERENSI TAMPILAN (FONT & WARNA TEMA)
+let currentFont = localStorage.getItem('tabungin_font') || 'sans';
+let currentAccentColor = localStorage.getItem('tabungin_accent_color') || 'blue';
+
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
+    initFontAndColor();
     closeModalUsername();
     closeModalChangePassword();
     updateUserUI();
-    await loadStorage(); 
+    await loadStorage();
+    initBrowserNotifications();
 });
 
 // AUTHENTICATION & USER MANAGEMENT
@@ -63,11 +69,10 @@ function closeModalUsername() {
     document.getElementById('modalUsername')?.classList.add('hidden');
 }
 
-// GANTI KATA SANDI MODAL
 function openModalChangePassword() {
     document.getElementById('topMenu')?.classList.add('hidden');
-    document.getElementById('inputOldPassword').value = '';
-    document.getElementById('inputNewPassword').value = '';
+    if (document.getElementById('inputOldPassword')) document.getElementById('inputOldPassword').value = '';
+    if (document.getElementById('inputNewPassword')) document.getElementById('inputNewPassword').value = '';
     document.getElementById('modalChangePassword')?.classList.remove('hidden');
 }
 
@@ -116,7 +121,6 @@ async function handleChangePasswordSubmit(e) {
             return;
         }
 
-        // Update password baru di Firestore
         await docRef.update({
             password: newPassword,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -280,22 +284,26 @@ function handleLogout() {
     showToast("Kamu kembali ke Mode Guest (Tamu)");
 }
 
+// FITUR BARU 3: UPDATE BANNER GUEST & USER UI
 function updateUserUI() {
     const label = document.getElementById('currentUsernameLabel');
     const loginBtn = document.getElementById('menuLoginBtn');
     const changePassBtn = document.getElementById('menuChangePassBtn');
     const logoutBtn = document.getElementById('menuLogoutBtn');
+    const guestBanner = document.getElementById('guestNoticeBanner');
 
     if (currentUser) {
         if (label) label.innerText = `@${currentUser}`;
         if (loginBtn) loginBtn.classList.add('hidden');
         if (changePassBtn) changePassBtn.classList.remove('hidden');
         if (logoutBtn) logoutBtn.classList.remove('hidden');
+        if (guestBanner) guestBanner.classList.add('hidden');
     } else {
         if (label) label.innerText = '@Guest (Tamu)';
         if (loginBtn) loginBtn.classList.remove('hidden');
         if (changePassBtn) changePassBtn.classList.add('hidden');
         if (logoutBtn) logoutBtn.classList.add('hidden');
+        if (guestBanner) guestBanner.classList.remove('hidden');
     }
 }
 
@@ -618,7 +626,7 @@ function renderHome() {
                         <div class="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
                             <svg class="w-14 h-14 transform -rotate-90">
                                 <circle cx="28" cy="28" r="22" class="stroke-gray-200 dark:stroke-[#282836]" stroke-width="4" fill="transparent" />
-                                <circle cx="28" cy="28" r="22" stroke="#3b82f6" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="${(138.23 - (138.23 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" class="transition-all duration-500 ease-out" />
+                                <circle cx="28" cy="28" r="22" stroke="currentColor" class="text-theme-accent" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="${(138.23 - (138.23 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" class="transition-all duration-500 ease-out" />
                             </svg>
                             <span class="absolute text-[11px] font-bold text-gray-900 dark:text-white">${pct}%</span>
                         </div>
@@ -626,7 +634,7 @@ function renderHome() {
 
                     <div class="border-t border-gray-100 dark:border-gray-800/80 mt-4 pt-3 flex items-center justify-between text-xs">
                         <span class="text-gray-500 dark:text-gray-400 font-medium">Sisa Estimasi</span>
-                        <span class="font-semibold text-blue-600 dark:text-blue-400">${estimasiText}</span>
+                        <span class="font-semibold text-theme-accent">${estimasiText}</span>
                     </div>
                 </div>
             </div>
@@ -777,7 +785,7 @@ function setFreqType(type) {
         if (b) b.className = "flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition";
     });
 
-    const activeClass = "flex-1 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#2a2a38] text-blue-600 dark:text-white shadow transition";
+    const activeClass = "flex-1 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#2a2a38] text-theme-accent shadow transition";
     if (type === 'Perhari' && btnH) btnH.className = activeClass;
     else if (type === 'Perminggu' && btnM) btnM.className = activeClass;
     else if (type === 'Perbulan' && btnB) btnB.className = activeClass;
@@ -951,7 +959,7 @@ function setTransactionType(type) {
 
     if (btnDep && btnWith) {
         if (type === 'deposit') {
-            btnDep.className = "flex-1 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white shadow transition";
+            btnDep.className = "flex-1 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white shadow transition";
             btnWith.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition";
         } else {
             btnWith.className = "flex-1 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow transition";
@@ -1010,6 +1018,7 @@ function handleSaveTransaction(e) {
         if (typeof confetti === 'function') {
             confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         }
+        sendBrowserNotification("Target Tabungan Tercapai! 🎉", `Selamat! Target tabungan "${item.title}" sudah 100% tercapai.`);
         showToast("Selamat! Target tabungan tercapai 🎉");
     } else {
         showToast(editingTxId ? "Catatan tabungan diperbarui" : (currentTxType === 'deposit' ? "Setoran berhasil dicatat" : "Penarikan berhasil dicatat"));
@@ -1110,7 +1119,22 @@ function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
-// MODAL ALARM
+// FITUR BARU 2: NOTIFIKASI BROWSER
+function initBrowserNotifications() {
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
+}
+
+function sendBrowserNotification(title, body) {
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+            body: body,
+            icon: 'https://cdn-icons-png.flaticon.com/512/2953/2953361.png'
+        });
+    }
+}
+
 function openModalReminder() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -1142,10 +1166,14 @@ function handleSaveReminder(e) {
     item.reminderFreq = document.getElementById('inputReminderFreq')?.value || 'Setiap Minggu';
     item.reminderEnabled = document.getElementById('inputReminderActive')?.checked !== false;
 
+    if (item.reminderEnabled && "Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+
     saveStorage();
     closeModalReminder();
     openDetailView(item.id);
-    showToast("Pengaturan pengingat disimpan");
+    showToast("Pengaturan pengingat disimpan ⏰");
 }
 
 function toggleReminderState(enabled) {
@@ -1155,7 +1183,7 @@ function toggleReminderState(enabled) {
 
     item.reminderEnabled = enabled;
     saveStorage();
-    showToast(enabled ? "Pengingat diaktifkan" : "Pengingat dinonaktifkan");
+    showToast(enabled ? "Pengingat diaktifkan ⏰" : "Pengingat dinonaktifkan");
 }
 
 // DELETE CELENGAN
@@ -1194,7 +1222,45 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// TEMA
+// FITUR BARU 1: PENGATURAN FONT DAN TEMA WARNA (MERAH, KUNING, HIJAU, BIRU)
+function initFontAndColor() {
+    changeFont(currentFont, false);
+    changeAccentColor(currentAccentColor, false);
+}
+
+function changeFont(fontName, notify = true) {
+    currentFont = fontName;
+    localStorage.setItem('tabungin_font', fontName);
+    
+    document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
+    if (fontName === 'serif') document.body.classList.add('font-serif');
+    else if (fontName === 'mono') document.body.classList.add('font-mono');
+    else document.body.classList.add('font-sans');
+
+    if (notify) showToast(`Font diubah ke ${fontName}`);
+}
+
+function changeAccentColor(color, notify = true) {
+    currentAccentColor = color;
+    localStorage.setItem('tabungin_accent_color', color);
+
+    const colorMap = {
+        blue: { text: '#3b82f6' },
+        red: { text: '#f43f5e' },
+        yellow: { text: '#f59e0b' },
+        green: { text: '#10b981' }
+    };
+
+    const activeColor = colorMap[color] || colorMap.blue;
+    document.documentElement.style.setProperty('--accent-color', activeColor.text);
+
+    const accents = document.querySelectorAll('.text-theme-accent');
+    accents.forEach(el => el.style.color = activeColor.text);
+
+    if (notify) showToast(`Warna tema diubah ke ${color}`);
+}
+
+// TEMA GELAP / TERANG / SISTEM
 function initTheme() {
     const savedTheme = localStorage.getItem('app_theme') || 'system';
     applyTheme(savedTheme);
