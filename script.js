@@ -338,7 +338,6 @@ async function loadStorage() {
     renderHome();
 }
 
-// SIMPAN SECARA INSTAN TANPA MEMBLOKIR UI
 function saveStorage() {
     const localKey = currentUser ? `celenganku_data_${currentUser}` : `celenganku_data_guest`;
 
@@ -1154,7 +1153,7 @@ function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
-// BROWSER NOTIFICATIONS & ONESIGNAL HANDLER
+// BROWSER NOTIFICATIONS HANDLER (SISTEM LOKAL BROWSER)
 function initBrowserNotifications() {
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
@@ -1190,7 +1189,7 @@ function closeModalReminder() {
     document.getElementById('modalReminder')?.classList.add('hidden');
 }
 
-async function handleSaveReminder(e) {
+function handleSaveReminder(e) {
     if (e) e.preventDefault();
     if (!currentDetailId) return;
 
@@ -1205,68 +1204,18 @@ async function handleSaveReminder(e) {
     item.reminderFreq = freqVal;
     item.reminderEnabled = isEnabled;
 
-    if (isEnabled) {
-        // 1. Minta Izin Notifikasi OneSignal
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(function(OneSignal) {
-            OneSignal.Notifications.requestPermission();
+    if (isEnabled && "Notification" in window) {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                sendBrowserNotification("Pengingat Aktif! ⏰", `Pengingat untuk "${item.title}" diatur jam ${timeVal}`);
+            }
         });
-
-        // 2. Hitung Jam Target Menggunakan Waktu Lokal HP
-        const [targetHours, targetMinutes] = timeVal.split(':').map(Number);
-        const now = new Date();
-        let targetDate = new Date();
-        targetDate.setHours(targetHours, targetMinutes, 0, 0);
-
-        // Jika jam yang dipilih sudah lewat hari ini, jadwalkan untuk besok
-        if (targetDate <= now) {
-            targetDate.setDate(targetDate.getDate() + 1);
-        }
-
-        // Format Tepat Standar OneSignal dengan Offset Zona Waktu Lokal (WIB/GMT+7)
-        const year = targetDate.getFullYear();
-        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-        const day = String(targetDate.getDate()).padStart(2, '0');
-        const hours = String(targetDate.getHours()).padStart(2, '0');
-        const minutes = String(targetDate.getMinutes()).padStart(2, '0');
-        
-        const tzo = -targetDate.getTimezoneOffset();
-        const dif = tzo >= 0 ? '+' : '-';
-        const pad = (num) => String(Math.floor(Math.abs(num))).padStart(2, '0');
-        const timezoneOffset = dif + pad(tzo / 60) + pad(tzo % 60);
-
-        // Format hasil: "YYYY-MM-DD HH:MM:SS GMT+0700"
-        const formattedSchedule = `${year}-${month}-${day} ${hours}:${minutes}:00 GMT${timezoneOffset}`;
-
-        // 3. Tembak REST API OneSignal
-        const ONESIGNAL_APP_ID = "0e5957d5-5a71-4e6c-a97b-317604fe8e94";
-        const ONESIGNAL_REST_KEY = "os_v2_app_bzmvpvk2ofhgzkl3gf3aj7uosqku4f3o7efuzpmnnwxmvimwosbyao2cjlcbntl3yosu2duioff7hak7biyu33kqcrtlihddhpgwhfy";
-
-        try {
-            await fetch("https://onesignal.com/api/v1/notifications", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "Authorization": `Basic ${ONESIGNAL_REST_KEY}`
-                },
-                body: JSON.stringify({
-                    app_id: ONESIGNAL_APP_ID,
-                    included_segments: ["Subscribed Users"],
-                    headings: { en: "Waktunya Menabung! 🐷" },
-                    contents: { en: `Yuk sisihkan tabungan untuk target "${item.title}" hari ini!` },
-                    send_after: formattedSchedule
-                })
-            });
-            showToast("Pengingat Cloud Berhasil Dijadwalkan! ⏰");
-        } catch (err) {
-            console.error("Gagal menjadwalkan notifikasi cloud:", err);
-        }
     }
 
     saveStorage();
     closeModalReminder();
     openDetailView(item.id);
-    showToast(isEnabled ? "Pengingat Aktif! ⏰" : "Pengingat disimpan (nonaktif)");
+    showToast(isEnabled ? "Pengingat disimpan & aktif ⏰" : "Pengingat disimpan (nonaktif)");
 }
 
 function toggleReminderState(enabled) {
