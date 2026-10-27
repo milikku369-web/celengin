@@ -55,8 +55,8 @@
             <!-- Header Actions -->
             <div class="flex items-center gap-3">
                 <button onclick="openModalAddSavings()" class="hidden sm:flex items-center gap-2 bg-theme-accent text-white font-medium px-4 py-2 rounded-xl text-xs shadow-lg transition active:scale-95">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Tambah Celengan</span>
+                    <i class="fa-solid fa-plus text-white"></i>
+                    <span class="text-white">Tambah Celengan</span>
                 </button>
 
                 <div class="relative">
@@ -266,7 +266,7 @@
                     <div class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 rounded-2xl p-4 flex items-center justify-between cursor-pointer transition shadow-lg" onclick="openModalReminder()">
                         <div class="flex items-center gap-3.5">
                             <div class="w-11 h-11 rounded-2xl bg-theme-light border border-theme-accent flex items-center justify-center text-theme-accent">
-                                <i class="fa-solid fa-bell text-lg"></i>
+                                <i class="fa-solid fa-bell text-lg text-theme-accent"></i>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
@@ -292,8 +292,9 @@
                             </div>
                             <span id="detailHistoryCount" class="text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#22222e] px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-800">0 Transaksi</span>
                         </div>
-                        <button onclick="openModalTransaction()" class="w-full bg-theme-accent text-white font-semibold py-3 px-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs transition active:scale-95">
-                            <i class="fa-solid fa-plus-minus"></i><span>Catat Tabungan Baru</span>
+                        <button onclick="openModalTransaction()" class="w-full bg-theme-accent hover:opacity-90 text-white font-semibold py-3 px-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs transition active:scale-95">
+                            <i class="fa-solid fa-plus-minus text-white"></i>
+                            <span class="text-white">Catat Tabungan Baru</span>
                         </button>
                         <div id="detailHistoryContainer" class="space-y-2.5 max-h-[450px] overflow-y-auto pr-1"></div>
                     </div>
