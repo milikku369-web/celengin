@@ -1134,7 +1134,7 @@ function handleEditTxFromModal() {
     const chipR = document.getElementById('chipRemaining');
     if (chipR) {
         chipR.innerText = `${formatDots(kekurang)}`;
-        chipR.onclick = () => setTxChipAmount(kekurang);
+        chipR.onclick = () => setTxTxChipAmount(kekurang);
     }
 
     document.getElementById('modalTransaction')?.classList.remove('hidden');
@@ -1223,11 +1223,16 @@ async function handleSaveReminder(e) {
                 const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
                 if (currentToken) {
                     item.fcmToken = currentToken;
-                    console.log('FCM Token Perangkat:', currentToken);
+                    // MENAMPILKAN POP-UP TEKS BERISI KODE TOKEN LANGSUNG DI LAYAR HP
+                    alert("TOKEN FCM KAMU BERHASIL DIDAPAT:\n\n" + currentToken);
+                } else {
+                    alert("Gagal mengambil token. Pastikan izin notifikasi diizinkan!");
                 }
+            } else {
+                alert("Izin notifikasi ditolak oleh browser!");
             }
         } catch (err) {
-            console.error('Gagal mengambil FCM Token:', err);
+            alert("Error FCM: " + err.message);
         }
     }
 
