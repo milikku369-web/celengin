@@ -2,76 +2,30 @@
     --accent-color: #3b82f6;
     --accent-hover: #2563eb;
     --accent-light-bg: rgba(59, 130, 246, 0.15);
-    --accent-border: rgba(59, 130, 246, 0.3);
 }
 
-body {
-    font-family: 'Poppins', sans-serif;
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* MENIMPA WARNA TOMBOL UTAMA & ELEMEN BIRU SECARA KESELURUHAN */
-.bg-blue-600, 
-button.bg-blue-600,
-#fabAddSavings button {
+/* Kustom Class Warna Tema Aksen */
+.bg-theme-accent {
     background-color: var(--accent-color) !important;
 }
 
-.hover\:bg-blue-500:hover, 
-button.bg-blue-600:hover,
-#fabAddSavings button:hover {
+.bg-theme-accent:hover {
     background-color: var(--accent-hover) !important;
 }
 
-.text-blue-600, 
-.text-blue-500, 
-.text-blue-400,
 .text-theme-accent {
     color: var(--accent-color) !important;
 }
 
-.border-blue-500, 
-.border-blue-600,
-.border-blue-300 {
+.border-theme-accent {
     border-color: var(--accent-color) !important;
 }
 
-.bg-blue-100,
-.bg-blue-50,
-.bg-blue-600\/20,
-.dark\:bg-blue-600\/30 {
+.bg-theme-light {
     background-color: var(--accent-light-bg) !important;
 }
 
-/* Custom Scrollbar Utama */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-::-webkit-scrollbar-track {
-    background: #0d0d0f;
-}
-::-webkit-scrollbar-thumb {
-    background: #282836;
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-color);
-}
-
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.animate-fade-in {
-    animation: fadeIn 0.25s ease-out forwards;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Perbaikan khusus Toggle Switch saat Checked */
+.peer:checked ~ .peer-checked\:bg-theme-accent {
+    background-color: var(--accent-color) !important;
 }
