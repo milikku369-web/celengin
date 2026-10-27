@@ -1212,18 +1212,33 @@ async function handleSaveReminder(e) {
             OneSignal.Notifications.requestPermission();
         });
 
-        // 2. Hitung Jam Target Pengingat Hari Ini / Besok
+        // 2. Hitung Jam Target Menggunakan Waktu Lokal HP
         const [targetHours, targetMinutes] = timeVal.split(':').map(Number);
         const now = new Date();
-        let scheduledDate = new Date();
-        scheduledDate.setHours(targetHours, targetMinutes, 0, 0);
+        let targetDate = new Date();
+        targetDate.setHours(targetHours, targetMinutes, 0, 0);
 
         // Jika jam yang dipilih sudah lewat hari ini, jadwalkan untuk besok
-        if (scheduledDate <= now) {
-            scheduledDate.setDate(scheduledDate.getDate() + 1);
+        if (targetDate <= now) {
+            targetDate.setDate(targetDate.getDate() + 1);
         }
 
-        // 3. Tembak REST API OneSignal untuk Buat Jadwal Cloud Otomatis
+        // Format Tepat Standar OneSignal dengan Offset Zona Waktu Lokal (WIB/GMT+7)
+        const year = targetDate.getFullYear();
+        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const day = String(targetDate.getDate()).padStart(2, '0');
+        const hours = String(targetDate.getHours()).padStart(2, '0');
+        const minutes = String(targetDate.getMinutes()).padStart(2, '0');
+        
+        const tzo = -targetDate.getTimezoneOffset();
+        const dif = tzo >= 0 ? '+' : '-';
+        const pad = (num) => String(Math.floor(Math.abs(num))).padStart(2, '0');
+        const timezoneOffset = dif + pad(tzo / 60) + pad(tzo % 60);
+
+        // Format hasil: "YYYY-MM-DD HH:MM:SS GMT+0700"
+        const formattedSchedule = `${year}-${month}-${day} ${hours}:${minutes}:00 GMT${timezoneOffset}`;
+
+        // 3. Tembak REST API OneSignal
         const ONESIGNAL_APP_ID = "0e5957d5-5a71-4e6c-a97b-317604fe8e94";
         const ONESIGNAL_REST_KEY = "os_v2_app_bzmvpvk2ofhgzkl3gf3aj7uosqku4f3o7efuzpmnnwxmvimwosbyao2cjlcbntl3yosu2duioff7hak7biyu33kqcrtlihddhpgwhfy";
 
@@ -1239,10 +1254,10 @@ async function handleSaveReminder(e) {
                     included_segments: ["Subscribed Users"],
                     headings: { en: "Waktunya Menabung! 🐷" },
                     contents: { en: `Yuk sisihkan tabungan untuk target "${item.title}" hari ini!` },
-                    send_after: scheduledDate.toISOString()
+                    send_after: formattedSchedule
                 })
             });
-            showToast("Pengingat Cloud Otomatis Dijadwalkan! ⏰");
+            showToast("Pengingat Cloud Berhasil Dijadwalkan! ⏰");
         } catch (err) {
             console.error("Gagal menjadwalkan notifikasi cloud:", err);
         }
