@@ -567,6 +567,132 @@ function calculateEstimasiText(item) {
     return `${sisaPeriode} ${unit} Lagi`;
 }
 
+// FUNGSI EKSPOR CATATAN TABUNGAN KE DOKUMEN PDF
+function exportToPDF() {
+    if (!currentDetailId) return;
+    const item = savingsData.find(s => s.id === currentDetailId);
+    if (!item) return;
+
+    const terkumpul = calculateTerkumpul(item);
+    const kekurang = Math.max(0, item.targetAmount - terkumpul);
+    const pct = calculatePercentage(item);
+    const symbol = item.currencySymbol || 'Rp';
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showToast("Izinkan pop-up peramban untuk mencetak PDF!");
+        return;
+    }
+
+    const historyRows = (item.history || []).map((tx, idx) => {
+        const isDep = tx.type === 'deposit';
+        return `
+            <tr>
+                <td style="text-align: center; border-bottom: 1px solid #e2e8f0; padding: 10px 8px;">${idx + 1}</td>
+                <td style="border-bottom: 1px solid #e2e8f0; padding: 10px 8px;">${tx.dateStr}</td>
+                <td style="border-bottom: 1px solid #e2e8f0; padding: 10px 8px;">
+                    <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: ${isDep ? '#d1fae5' : '#ffe4e6'}; color: ${isDep ? '#065f46' : '#9f1239'};">
+                        ${isDep ? '+ Setoran' : '- Penarikan'}
+                    </span>
+                </td>
+                <td style="border-bottom: 1px solid #e2e8f0; padding: 10px 8px;">${escapeHtml(tx.note || '-')}</td>
+                <td style="text-align: right; border-bottom: 1px solid #e2e8f0; padding: 10px 8px; font-weight: 700; color: ${isDep ? '#10b981' : '#f43f5e'};">
+                    ${isDep ? '+' : '-'} ${formatCurrency(tx.amount, symbol)}
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Laporan Tabungan - ${escapeHtml(item.title)}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+                * { box-sizing: border-box; }
+                body { font-family: 'Poppins', sans-serif; padding: 30px; color: #1e293b; background: #fff; margin: 0; }
+                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--accent-color, #3b82f6); padding-bottom: 15px; margin-bottom: 25px; }
+                .logo-text { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; }
+                .logo-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+                .doc-info { text-align: right; font-size: 11px; color: #64748b; }
+                .card-title { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+                .card-title h2 { margin: 0 0 6px 0; font-size: 18px; color: #0f172a; }
+                .card-title p { margin: 0; font-size: 12px; color: #64748b; }
+                .grid-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
+                .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center; }
+                .stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
+                .stat-value { font-size: 16px; font-weight: 800; color: #0f172a; }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+                th { background: #f1f5f9; color: #475569; font-weight: 600; padding: 10px 8px; text-align: left; border-bottom: 2px solid #cbd5e1; }
+                .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; pt: 15px; text-align: center; font-size: 11px; color: #94a3b8; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div>
+                    <h1 class="logo-text">TABUNGin</h1>
+                    <p class="logo-sub">Laporan Rekap Catatan Tabungan</p>
+                </div>
+                <div class="doc-info">
+                    <p><strong>Dicetak Pada:</strong> ${formatDateNow()}</p>
+                    <p><strong>Pengguna:</strong> @${currentUser || 'Guest'}</p>
+                </div>
+            </div>
+
+            <div class="card-title">
+                <h2>Target Impian: ${escapeHtml(item.title)}</h2>
+                <p>Status Capaian: <strong>${pct}% Tercapai</strong> • Rencana Ritin: ${formatCurrency(item.freqAmount, symbol)} / ${item.freqType || 'Minggu'}</p>
+            </div>
+
+            <div class="grid-summary">
+                <div class="stat-box">
+                    <div class="stat-label">Target Tabungan</div>
+                    <div class="stat-value">${formatCurrency(item.targetAmount, symbol)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label" style="color: #059669;">Total Terkumpul</div>
+                    <div class="stat-value" style="color: #059669;">${formatCurrency(terkumpul, symbol)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label" style="color: #e11d48;">Sisa Kekurangan</div>
+                    <div class="stat-value" style="color: #e11d48;">${formatCurrency(kekurang, symbol)}</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 14px; margin-bottom: 10px; color: #334155;">Riwayat Transaksi</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">#</th>
+                        <th style="width: 150px;">Tanggal</th>
+                        <th style="width: 110px;">Jenis</th>
+                        <th>Keterangan Catatan</th>
+                        <th style="text-align: right; width: 140px;">Nominal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${historyRows || '<tr><td colspan="5" style="text-align:center; padding: 20px; color:#94a3b8;">Belum ada riwayat transaksi.</td></tr>'}
+                </tbody>
+            </table>
+
+            <div class="footer">
+                <p>Dokumen ini dicetak secara otomatis dari aplikasi TABUNGin sebagai rekap tabungan yang sah.</p>
+            </div>
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+
+    showToast("Membuka dokumen PDF untuk dicetak...");
+}
+
 // VIEW ROUTING
 function showView(viewName) {
     document.getElementById('topMenu')?.classList.add('hidden');
