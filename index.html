@@ -107,10 +107,10 @@
                         <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700/50">
                             <p class="text-[10px] text-gray-400 font-medium mb-1.5">Warna Akses Tema</p>
                             <div class="flex items-center gap-2">
-                                <button onclick="changeAccentColor('blue')" class="w-6 h-6 rounded-full bg-blue-500 hover:scale-110 active:scale-95 transition" title="Biru"></button>
-                                <button onclick="changeAccentColor('red')" class="w-6 h-6 rounded-full bg-rose-500 hover:scale-110 active:scale-95 transition" title="Merah"></button>
-                                <button onclick="changeAccentColor('yellow')" class="w-6 h-6 rounded-full bg-amber-500 hover:scale-110 active:scale-95 transition" title="Kuning"></button>
-                                <button onclick="changeAccentColor('green')" class="w-6 h-6 rounded-full bg-emerald-500 hover:scale-110 active:scale-95 transition" title="Hijau"></button>
+                                <button id="btnColorBlue" onclick="changeAccentColor('blue')" class="w-6 h-6 rounded-full bg-blue-500 hover:scale-110 active:scale-95 transition flex items-center justify-center" title="Biru"></button>
+                                <button id="btnColorRed" onclick="changeAccentColor('red')" class="w-6 h-6 rounded-full bg-rose-500 hover:scale-110 active:scale-95 transition flex items-center justify-center" title="Merah"></button>
+                                <button id="btnColorYellow" onclick="changeAccentColor('yellow')" class="w-6 h-6 rounded-full bg-amber-500 hover:scale-110 active:scale-95 transition flex items-center justify-center" title="Kuning"></button>
+                                <button id="btnColorGreen" onclick="changeAccentColor('green')" class="w-6 h-6 rounded-full bg-emerald-500 hover:scale-110 active:scale-95 transition flex items-center justify-center" title="Hijau"></button>
                             </div>
                         </div>
 
@@ -134,12 +134,12 @@
                         </button>
 
                         <!-- Menu Reset Data Contoh -->
-                        <button onclick="seedSampleData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282836] flex items-center gap-2.5 transition">
+                        <button onclick="confirmResetSampleData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282836] flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-rotate-left text-theme-accent"></i> Reset Data Contoh
                         </button>
 
                         <!-- Menu Hapus Semua Data -->
-                        <button onclick="clearAllData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282836] text-rose-500 dark:text-rose-400 flex items-center gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
+                        <button onclick="confirmClearAllData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282836] text-rose-500 dark:text-rose-400 flex items-center gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
                             <i class="fa-solid fa-trash-can"></i> Hapus Semua Data
                         </button>
 
