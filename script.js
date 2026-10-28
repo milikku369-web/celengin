@@ -567,22 +567,23 @@ function calculateEstimasiText(item) {
     return `${sisaPeriode} ${unit} Lagi`;
 }
 
-// FUNGSI EKSPOR CATATAN TABUNGAN KE DOKUMEN PDF
+// FUNGSI EKSPOR CATATAN TABUNGAN KE DOKUMEN PDF (ANTI POP-UP BLOCKED)
 function exportToPDF() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
+    // Direct open window agar lolos deteksi Pop-up Blocker browser
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showToast("Mohon izinkan Pop-up di peramban kamu!");
+        return;
+    }
+
     const terkumpul = calculateTerkumpul(item);
     const kekurang = Math.max(0, item.targetAmount - terkumpul);
     const pct = calculatePercentage(item);
     const symbol = item.currencySymbol || 'Rp';
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-        showToast("Izinkan pop-up peramban untuk mencetak PDF!");
-        return;
-    }
 
     const historyRows = (item.history || []).map((tx, idx) => {
         const isDep = tx.type === 'deposit';
@@ -612,7 +613,7 @@ function exportToPDF() {
             <style>
                 * { box-sizing: border-box; }
                 body { font-family: 'Poppins', sans-serif; padding: 30px; color: #1e293b; background: #fff; margin: 0; }
-                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--accent-color, #3b82f6); padding-bottom: 15px; margin-bottom: 25px; }
+                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #3b82f6; padding-bottom: 15px; margin-bottom: 25px; }
                 .logo-text { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; }
                 .logo-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
                 .doc-info { text-align: right; font-size: 11px; color: #64748b; }
@@ -625,7 +626,7 @@ function exportToPDF() {
                 .stat-value { font-size: 16px; font-weight: 800; color: #0f172a; }
                 table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
                 th { background: #f1f5f9; color: #475569; font-weight: 600; padding: 10px 8px; text-align: left; border-bottom: 2px solid #cbd5e1; }
-                .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; pt: 15px; text-align: center; font-size: 11px; color: #94a3b8; }
+                .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 11px; color: #94a3b8; }
             </style>
         </head>
         <body>
@@ -642,7 +643,7 @@ function exportToPDF() {
 
             <div class="card-title">
                 <h2>Target Impian: ${escapeHtml(item.title)}</h2>
-                <p>Status Capaian: <strong>${pct}% Tercapai</strong> • Rencana Ritin: ${formatCurrency(item.freqAmount, symbol)} / ${item.freqType || 'Minggu'}</p>
+                <p>Status Capaian: <strong>${pct}% Tercapai</strong> • Rencana Rutin: ${formatCurrency(item.freqAmount, symbol)} / ${item.freqType || 'Minggu'}</p>
             </div>
 
             <div class="grid-summary">
@@ -688,9 +689,9 @@ function exportToPDF() {
     setTimeout(() => {
         printWindow.print();
         printWindow.close();
-    }, 500);
+    }, 300);
 
-    showToast("Membuka dokumen PDF untuk dicetak...");
+    showToast("Membuka dokumen PDF...");
 }
 
 // VIEW ROUTING
