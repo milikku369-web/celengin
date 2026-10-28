@@ -43,6 +43,10 @@ let selectedTxIdForModal = null;
 let currentUser = localStorage.getItem('tabungin_username') || '';
 let currentAuthMode = 'login';
 
+// STATE KEAMANAN LOGIN (BRUTE FORCE LIMITING)
+let loginAttempts = parseInt(localStorage.getItem('tabungin_login_attempts') || '0');
+let lockUntil = parseInt(localStorage.getItem('tabungin_lock_until') || '0');
+
 // PREFERENSI TAMPILAN (FONT & WARNA TEMA)
 let currentFont = localStorage.getItem('tabungin_font') || 'sans';
 let currentAccentColor = localStorage.getItem('tabungin_accent_color') || 'blue';
@@ -57,6 +61,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadStorage();
     initBrowserNotifications();
 });
+
+// HELPER PENGAMBILAN IP PUBLIK UNTUK PENCEGAHAN SPAM
+async function getPublicIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (err) {
+        console.warn("Gagal mengambil IP Publik:", err);
+        return "unknown_ip";
+    }
+}
 
 // AUTHENTICATION & USER MANAGEMENT
 function openModalUsername() {
@@ -176,6 +192,16 @@ function togglePasswordVisibility() {
 
 async function handleAuthSubmit(e) {
     if (e) e.preventDefault();
+
+    const now = Date.now();
+
+    // 1. KEAMANAN: CEK DIBLOKIR LOGIN KARENA 5X SALAH (JEDA 1 MENIT)
+    if (currentAuthMode === 'login' && lockUntil > now) {
+        const remainingSeconds = Math.ceil((lockUntil - now) / 1000);
+        showToast(`Akses terkunci! Silakan tunggu ${remainingSeconds} detik lagi.`);
+        return;
+    }
+
     const rawInput = document.getElementById('inputAuthUsername')?.value || "";
     const password = document.getElementById('inputAuthPassword')?.value || "";
     const username = rawInput.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -200,6 +226,24 @@ async function handleAuthSubmit(e) {
         const docSnap = await docRef.get();
 
         if (currentAuthMode === 'register') {
+            // 2. KEAMANAN: CEK PEMBATASAN DAFTAR AKUN BARU (1X PER 12 JAM VIA IP)
+            const userIP = await getPublicIP();
+            const twelveHoursInMs = 12 * 60 * 60 * 1000;
+
+            if (userIP !== "unknown_ip") {
+                const ipDocRef = db.collection("ip_registers").doc(userIP.replace(/\./g, '_'));
+                const ipSnap = await ipDocRef.get();
+
+                if (ipSnap.exists) {
+                    const lastRegisterTime = ipSnap.data().lastRegisterAt?.toMillis() || 0;
+                    if (now - lastRegisterTime < twelveHoursInMs) {
+                        const remainingHours = Math.ceil((twelveHoursInMs - (now - lastRegisterTime)) / (1000 * 60 * 60));
+                        showToast(`IP ini baru saja mendaftar. Silakan coba lagi dalam ${remainingHours} jam!`);
+                        return;
+                    }
+                }
+            }
+
             if (docSnap.exists) {
                 showToast("Username sudah dipakai, pilih username lain!");
                 return;
@@ -234,14 +278,25 @@ async function handleAuthSubmit(e) {
                 ];
             }
 
+            // SIMPAN DATA AKUN BARU
             await docRef.set({
                 username: username,
                 password: password,
                 items: savingsData,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            // CATAT IP KELUARAN KE FIRESTORE UNTUK PEMBATASAN 12 JAM
+            if (userIP !== "unknown_ip") {
+                await db.collection("ip_registers").doc(userIP.replace(/\./g, '_')).set({
+                    ip: userIP,
+                    lastRegisterAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
             showToast(`Akun @${username} berhasil dibuat & disinkronkan! 🎉`);
         } else {
+            // PROSES LOGIN DENGAN PENCEGAHAN BRUTE FORCE
             if (!docSnap.exists) {
                 showToast("Username tidak ditemukan! Silakan klik 'Daftar Baru'");
                 return;
@@ -249,9 +304,25 @@ async function handleAuthSubmit(e) {
 
             const userData = docSnap.data();
             if (userData.password && userData.password !== password) {
-                showToast("Kata sandi / password salah!");
+                loginAttempts += 1;
+                localStorage.setItem('tabungin_login_attempts', loginAttempts);
+
+                if (loginAttempts >= 5) {
+                    lockUntil = Date.now() + 60000; // Dikunci 1 Menit (60.000 ms)
+                    localStorage.setItem('tabungin_lock_until', lockUntil);
+                    loginAttempts = 0;
+                    localStorage.setItem('tabungin_login_attempts', '0');
+                    showToast("Gagal login 5x! Akses login dikunci selama 1 menit.");
+                } else {
+                    showToast(`Kata sandi salah! Sisa percobaan: ${5 - loginAttempts}`);
+                }
                 return;
             }
+
+            // LOGIN BERHASIL -> RESET SELURUH ATTEMPTS & LOCK
+            loginAttempts = 0;
+            localStorage.setItem('tabungin_login_attempts', '0');
+            localStorage.removeItem('tabungin_lock_until');
 
             savingsData = userData.items || [];
             showToast(`Selamat datang kembali, @${username}!`);
@@ -358,7 +429,6 @@ function saveStorage() {
     }
 }
 
-// FIX ITEM 2: KONFIRMASI DAHULU SEBELUM RESET DATA CONTOH
 function confirmResetSampleData() {
     document.getElementById('topMenu')?.classList.add('hidden');
     if (confirm("Apakah kamu yakin ingin mereset dan memuat data contoh? Data tabungan saat ini akan diganti.")) {
@@ -399,7 +469,6 @@ function seedSampleData(notify = true) {
     if (notify) showToast("Data contoh berhasil dimuat");
 }
 
-// FIX ITEM 2: KONFIRMASI DAHULU SEBELUM HAPUS SEMUA DATA
 function confirmClearAllData() {
     document.getElementById('topMenu')?.classList.add('hidden');
     if (confirm("PERINGATAN: Apakah kamu yakin ingin menghapus SEMUA data tabungan? Tindakan ini tidak dapat dibatalkan!")) {
@@ -1309,7 +1378,6 @@ function changeFont(fontName, notify = true) {
     if (notify) showToast(`Font diubah ke ${fontName}`);
 }
 
-// FIX ITEM 1: MENAMBAHKAN INDIKATOR CENTANG PADA WARNA TEMA YANG DIPILIH
 function changeAccentColor(color, notify = true) {
     currentAccentColor = color;
     localStorage.setItem('tabungin_accent_color', color);
@@ -1332,7 +1400,6 @@ function changeAccentColor(color, notify = true) {
         circle.setAttribute('stroke', activeColor.main);
     });
 
-    // MEMASANG TANDA CENTANG DI WIDGET WARNA DIPILIH
     const colorBtns = {
         blue: document.getElementById('btnColorBlue'),
         red: document.getElementById('btnColorRed'),
