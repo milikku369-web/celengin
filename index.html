@@ -125,7 +125,7 @@
                         </div>
 
                         <!-- Menu Pengaturan Tema Gelap/Terang -->
-                        <button onclick="cycleTheme()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282836] flex items-center justify-between gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
+                        <button onclick="cycleTheme()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282838] flex items-center justify-between gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
                             <div class="flex items-center gap-2.5">
                                 <i id="menuThemeIcon" class="fa-solid fa-circle-half-stroke text-theme-accent text-sm"></i>
                                 <span class="font-medium">Mode Tampilan</span>
@@ -134,12 +134,12 @@
                         </button>
 
                         <!-- Menu Reset Data Contoh -->
-                        <button onclick="confirmResetSampleData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282836] flex items-center gap-2.5 transition">
+                        <button onclick="confirmResetSampleData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282838] flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-rotate-left text-theme-accent"></i> Reset Data Contoh
                         </button>
 
                         <!-- Menu Hapus Semua Data -->
-                        <button onclick="confirmClearAllData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282836] text-rose-500 dark:text-rose-400 flex items-center gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
+                        <button onclick="confirmClearAllData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282838] text-rose-500 dark:text-rose-400 flex items-center gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
                             <i class="fa-solid fa-trash-can"></i> Hapus Semua Data
                         </button>
 
@@ -223,14 +223,18 @@
                     </button>
                     <div>
                         <span class="text-[10px] text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Detail Tabungan</span>
-                        <h2 id="detailHeaderTitle" class="text-lg font-bold text-gray-900 dark:text-white truncate max-w-[200px] sm:max-w-md">Detail Tabungan</h2>
+                        <h2 id="detailHeaderTitle" class="text-lg font-bold text-gray-900 dark:text-white truncate max-w-[150px] sm:max-w-md">Detail Tabungan</h2>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="openModalEditSavings()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 text-theme-accent px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition">
+                    <!-- TOMBOL EKSPOR PDF BARU -->
+                    <button onclick="exportToPDF()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 text-rose-500 dark:text-rose-400 hover:border-rose-500/50 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition active:scale-95" title="Ekspor PDF">
+                        <i class="fa-solid fa-file-pdf text-sm"></i><span class="hidden sm:inline">Ekspor PDF</span>
+                    </button>
+                    <button onclick="openModalEditSavings()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 text-theme-accent px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition active:scale-95">
                         <i class="fa-solid fa-pencil"></i><span class="hidden sm:inline">Edit</span>
                     </button>
-                    <button onclick="confirmDeleteSavings()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 hover:border-rose-500/50 text-rose-600 dark:text-rose-400 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition">
+                    <button onclick="confirmDeleteSavings()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 hover:border-rose-500/50 text-rose-600 dark:text-rose-400 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition active:scale-95">
                         <i class="fa-solid fa-trash-can"></i><span class="hidden sm:inline">Hapus</span>
                     </button>
                 </div>
