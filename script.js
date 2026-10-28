@@ -358,6 +358,14 @@ function saveStorage() {
     }
 }
 
+// FIX ITEM 2: KONFIRMASI DAHULU SEBELUM RESET DATA CONTOH
+function confirmResetSampleData() {
+    document.getElementById('topMenu')?.classList.add('hidden');
+    if (confirm("Apakah kamu yakin ingin mereset dan memuat data contoh? Data tabungan saat ini akan diganti.")) {
+        seedSampleData(true);
+    }
+}
+
 function seedSampleData(notify = true) {
     savingsData = [
         {
@@ -389,6 +397,14 @@ function seedSampleData(notify = true) {
     renderHome();
     if (currentDetailId) openDetailView(currentDetailId);
     if (notify) showToast("Data contoh berhasil dimuat");
+}
+
+// FIX ITEM 2: KONFIRMASI DAHULU SEBELUM HAPUS SEMUA DATA
+function confirmClearAllData() {
+    document.getElementById('topMenu')?.classList.add('hidden');
+    if (confirm("PERINGATAN: Apakah kamu yakin ingin menghapus SEMUA data tabungan? Tindakan ini tidak dapat dibatalkan!")) {
+        clearAllData();
+    }
 }
 
 function clearAllData() {
@@ -1293,6 +1309,7 @@ function changeFont(fontName, notify = true) {
     if (notify) showToast(`Font diubah ke ${fontName}`);
 }
 
+// FIX ITEM 1: MENAMBAHKAN INDIKATOR CENTANG PADA WARNA TEMA YANG DIPILIH
 function changeAccentColor(color, notify = true) {
     currentAccentColor = color;
     localStorage.setItem('tabungin_accent_color', color);
@@ -1313,6 +1330,25 @@ function changeAccentColor(color, notify = true) {
     const circles = document.querySelectorAll('circle#detailCircleProgress, svg circle.text-theme-accent');
     circles.forEach(circle => {
         circle.setAttribute('stroke', activeColor.main);
+    });
+
+    // MEMASANG TANDA CENTANG DI WIDGET WARNA DIPILIH
+    const colorBtns = {
+        blue: document.getElementById('btnColorBlue'),
+        red: document.getElementById('btnColorRed'),
+        yellow: document.getElementById('btnColorYellow'),
+        green: document.getElementById('btnColorGreen')
+    };
+
+    Object.keys(colorBtns).forEach(key => {
+        const btn = colorBtns[key];
+        if (btn) {
+            if (key === color) {
+                btn.innerHTML = `<i class="fa-solid fa-check text-white text-[10px]"></i>`;
+            } else {
+                btn.innerHTML = ``;
+            }
+        }
     });
 
     if (notify) showToast(`Warna tema diubah ke ${color}`);
