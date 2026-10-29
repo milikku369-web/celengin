@@ -102,6 +102,7 @@ let selectedTxIdForModal = null;
 // USER MANAGEMENT STATE
 let currentUser = localStorage.getItem('tabungin_username') || '';
 let currentAuthMode = 'login';
+let deleteAccountTimer = null;
 
 // STATE KEAMANAN LOGIN (BRUTE FORCE LIMITING)
 let loginAttempts = parseInt(localStorage.getItem('tabungin_login_attempts') || '0');
@@ -121,9 +122,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUserUI();
     await loadStorage();
     initBrowserNotifications();
+
+    // Event listener untuk Kalkulator Simulasi Menabung
+    const targetInput = document.getElementById('inputTargetAmount');
+    if (targetInput) {
+        targetInput.addEventListener('input', calculateSavingsTargetSimulation);
+    }
 });
 
-// VALIDASI SESI KEAMANAN OTOMATIS
+// VALIDASI SESI KEAMANAN OTOMATIS & CEK PEMULIHAN AKUN (SOFT DELETE)
 async function validateUserSession() {
     if (!currentUser || !db) return true;
 
@@ -135,6 +142,34 @@ async function validateUserSession() {
             showToast("Akun kamu telah dihapus dari sistem!");
             forceLogoutSystem();
             return false;
+        }
+
+        const data = docSnap.data();
+        if (data.isDeleted) {
+            const deleteTime = data.deletedAt?.toMillis() || 0;
+            const now = Date.now();
+            const hoursPassed = (now - deleteTime) / (1000 * 60 * 60);
+
+            if (hoursPassed >= 24) {
+                // Permanently delete after 24 hours
+                await docRef.delete();
+                showToast("Masa pemulihan 24 jam telah berakhir. Akun dihapus permanen.");
+                forceLogoutSystem();
+                return false;
+            } else {
+                const remainingHours = Math.ceil(24 - hoursPassed);
+                if (confirm(`Akun ini sedang dalam proses penghapusan (Sisa waktu pemulihan: ${remainingHours} jam).\n\nApakah kamu ingin memulihkan akun ini kembali?`)) {
+                    await docRef.update({
+                        isDeleted: false,
+                        deletedAt: null
+                    });
+                    showToast("Akun berhasil dipulihkan kembali! 🎉");
+                    return true;
+                } else {
+                    forceLogoutSystem();
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -243,10 +278,73 @@ function openModalChangePassword() {
     if (document.getElementById('inputOldPassword')) document.getElementById('inputOldPassword').value = '';
     if (document.getElementById('inputNewPassword')) document.getElementById('inputNewPassword').value = '';
     document.getElementById('modalChangePassword')?.classList.remove('hidden');
+
+    startDeleteAccountCooldown();
 }
 
 function closeModalChangePassword() {
     document.getElementById('modalChangePassword')?.classList.add('hidden');
+    if (deleteAccountTimer) {
+        clearInterval(deleteAccountTimer);
+        deleteAccountTimer = null;
+    }
+}
+
+// FITUR 2: COOLDOWN 20 DETIK PADA TOMBOL HAPUS AKUN PERMANEN
+function startDeleteAccountCooldown() {
+    const btn = document.getElementById('btnDeleteAccount');
+    if (!btn) return;
+
+    if (deleteAccountTimer) clearInterval(deleteAccountTimer);
+
+    let timeLeft = 20;
+    btn.disabled = true;
+    btn.className = "w-full py-2.5 bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed font-semibold rounded-xl text-xs transition";
+    btn.innerText = `Hapus Akun Permanen (${timeLeft}s)`;
+
+    deleteAccountTimer = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+            btn.innerText = `Hapus Akun Permanen (${timeLeft}s)`;
+        } else {
+            clearInterval(deleteAccountTimer);
+            deleteAccountTimer = null;
+            btn.disabled = false;
+            btn.className = "w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-xl text-xs shadow-md transition cursor-pointer";
+            btn.innerText = "Hapus Akun Permanen";
+        }
+    }, 1000);
+}
+
+// FITUR 2: HAPUS AKUN PERMANEN (SOFT DELETE 24 JAM)
+async function handleSoftDeleteAccount() {
+    if (!currentUser) {
+        showToast("Kamu belum login!");
+        return;
+    }
+
+    if (!confirm("Konfirmasi Penghapusan Akun:\n\nApakah kamu yakin ingin menghapus akun ini? Akun akan disembunyikan dan dapat dipulihkan dalam kurun waktu 24 jam sebelum terhapus permanen.")) {
+        return;
+    }
+
+    if (!db) {
+        showToast("Koneksi database Firebase belum siap!");
+        return;
+    }
+
+    try {
+        const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
+        await docRef.update({
+            isDeleted: true,
+            deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast("Akun telah ditandai untuk dihapus. Kamu memiliki 24 jam untuk memulihkannya.");
+        forceLogoutSystem();
+    } catch (err) {
+        console.error("Gagal menghapus akun:", err);
+        showToast("Gagal memproses penghapusan akun!");
+    }
 }
 
 async function handleChangePasswordSubmit(e) {
@@ -410,6 +508,7 @@ async function handleAuthSubmit(e) {
                 username: username,
                 password: password,
                 items: [],
+                isDeleted: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
@@ -448,12 +547,17 @@ async function handleAuthSubmit(e) {
             localStorage.setItem('tabungin_login_attempts', '0');
             localStorage.removeItem('tabungin_lock_until');
 
+            currentUser = username;
+            localStorage.setItem('tabungin_username', currentUser);
+
+            // Cek apakah akun dalam masa soft-delete saat login
+            const isValidSession = await validateUserSession();
+            if (!isValidSession) return;
+
             savingsData = userData.items || [];
             showToast(`Selamat datang kembali, @${username}!`);
         }
 
-        currentUser = username;
-        localStorage.setItem('tabungin_username', currentUser);
         closeModalUsername();
 
         if (document.getElementById('inputAuthPassword')) {
@@ -501,6 +605,9 @@ function updateUserUI() {
 async function loadStorage() {
     if (currentUser && db) {
         try {
+            const isValid = await validateUserSession();
+            if (!isValid) return;
+
             const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
             const docSnap = await docRef.get();
 
@@ -699,6 +806,66 @@ function calculateEstimasiText(item) {
     return `${sisaPeriode} ${unit} Lagi`;
 }
 
+// FITUR 1: KALKULATOR SIMULASI TARGET MENABUNG
+function calculateSavingsTargetSimulation() {
+    const targetAmount = parseNominal(document.getElementById('inputTargetAmount')?.value);
+    const deadlineVal = document.getElementById('inputTargetDeadline')?.value;
+    const freqType = document.getElementById('inputFreqType')?.value || 'Perminggu';
+    const infoBox = document.getElementById('calcSimulationInfo');
+
+    if (!infoBox) return;
+
+    if (!targetAmount || !deadlineVal) {
+        infoBox.classList.add('hidden');
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const targetDate = new Date(deadlineVal);
+    targetDate.setHours(0, 0, 0, 0);
+
+    const diffTime = targetDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) {
+        infoBox.classList.remove('hidden');
+        infoBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-500 mr-1"></i> Tanggal deadline harus lebih besar dari hari ini!`;
+        return;
+    }
+
+    let requiredAmount = 0;
+    let labelUnit = "per hari";
+
+    if (freqType === 'Perhari') {
+        requiredAmount = Math.ceil(targetAmount / diffDays);
+        labelUnit = "per hari";
+    } else if (freqType === 'Perbulan') {
+        const diffMonths = Math.max(1, diffDays / 30);
+        requiredAmount = Math.ceil(targetAmount / diffMonths);
+        labelUnit = "per bulan";
+    } else {
+        // Perminggu
+        const diffWeeks = Math.max(1, diffDays / 7);
+        requiredAmount = Math.ceil(targetAmount / diffWeeks);
+        labelUnit = "per minggu";
+    }
+
+    // Isikan otomatis ke inputNominal
+    const freqInput = document.getElementById('inputFreqAmount');
+    if (freqInput) {
+        freqInput.value = formatDots(requiredAmount);
+    }
+
+    infoBox.classList.remove('hidden');
+    infoBox.innerHTML = `
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-calculator text-sm"></i>
+            <span>Simulasi: Tabung <strong>${formatCurrency(requiredAmount)}</strong> ${labelUnit} selama ${diffDays} hari.</span>
+        </div>
+    `;
+}
+
 // FUNGSI EKSPOR PDF (ANTI POP-UP BLOCKED)
 function exportToPDF() {
     if (!currentDetailId) return;
@@ -856,10 +1023,10 @@ function setActiveTab(tab) {
 
     if (tabB && tabT) {
         if (tab === 'berlangsung') {
-            tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition";
+            tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-theme-accent bg-white dark:bg-[#282838] shadow transition";
             tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition";
         } else {
-            tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition";
+            tabT.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-theme-accent bg-white dark:bg-[#282838] shadow transition";
             tabB.className = "flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition";
         }
     }
@@ -886,11 +1053,12 @@ function toggleSortOrder() {
     currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
     const icon = document.getElementById('sortOrderIcon');
     const label = document.getElementById('sortOrderLabel');
-    if (icon) icon.className = currentSortOrder === 'asc' ? "fa-solid fa-arrow-up text-blue-500 dark:text-blue-400" : "fa-solid fa-arrow-down text-blue-500 dark:text-blue-400";
+    if (icon) icon.className = currentSortOrder === 'asc' ? "fa-solid fa-arrow-up text-theme-accent" : "fa-solid fa-arrow-down text-theme-accent";
     if (label) label.innerText = currentSortOrder === 'asc' ? "Meningkat" : "Menurun";
     renderHome();
 }
 
+// FUNGSI RENDER HOME CARD (PERSIS DESAIN ASLI TAMPILAN KAMU)
 function renderHome() {
     const container = document.getElementById('savingsListContainer') || document.getElementById('savingsList');
     const emptyState = document.getElementById('emptyState');
@@ -947,34 +1115,31 @@ function renderHome() {
         const symbol = item.currencySymbol || 'Rp';
 
         return `
-            <div onclick="openDetailView('${item.id}')" class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 hover:border-gray-300 dark:hover:border-gray-700 rounded-3xl p-5 shadow-xl cursor-pointer transition transform hover:-translate-y-1 active:scale-[0.99] flex flex-col justify-between space-y-4">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-wide truncate mb-3">${escapeHtml(item.title)}</h3>
+            <div onclick="openDetailView('${item.id}')" class="bg-white dark:bg-[#181820] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/80 cursor-pointer transition active:scale-[0.99] space-y-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">${escapeHtml(item.title)}</h3>
 
-                    <div class="w-full h-48 rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#22222e] flex items-center justify-center">
-                        <img src="${img}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/22222a/94a3b8?text=Impian+Kamu';">
+                <div class="w-full h-44 rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#22222e]">
+                    <img src="${img}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover">
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-2xl font-extrabold text-gray-900 dark:text-white">${formatCurrency(item.targetAmount, symbol)}</h4>
+                        <p class="text-xs text-gray-400 mt-0.5 font-medium">${formatCurrency(item.freqAmount, symbol)} ${escapeHtml(item.freqType || 'Perhari')}</p>
+                    </div>
+                    
+                    <div class="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-12 h-12 transform -rotate-90">
+                            <circle cx="24" cy="24" r="18" class="stroke-gray-100 dark:stroke-[#262634]" stroke-width="3.5" fill="transparent" />
+                            <circle cx="24" cy="24" r="18" stroke="currentColor" class="text-emerald-500" stroke-width="3.5" stroke-dasharray="113.09" stroke-dashoffset="${(113.09 - (113.09 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" />
+                        </svg>
+                        <span class="absolute text-[10px] font-bold text-gray-800 dark:text-white">${pct}%</span>
                     </div>
                 </div>
 
-                <div>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="text-2xl font-extrabold text-gray-900 dark:text-white">${formatCurrency(item.targetAmount, symbol)}</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">${formatCurrency(item.freqAmount, symbol)} ${escapeHtml(item.freqType || 'Perminggu')}</p>
-                        </div>
-                        <div class="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-14 h-14 transform -rotate-90">
-                                <circle cx="28" cy="28" r="22" class="stroke-gray-200 dark:stroke-[#282836]" stroke-width="4" fill="transparent" />
-                                <circle cx="28" cy="28" r="22" stroke="currentColor" class="text-theme-accent" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="${(138.23 - (138.23 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" class="transition-all duration-500 ease-out" />
-                            </svg>
-                            <span class="absolute text-[11px] font-bold text-gray-900 dark:text-white">${pct}%</span>
-                        </div>
-                    </div>
-
-                    <div class="border-t border-gray-100 dark:border-gray-800/80 mt-4 pt-3 flex items-center justify-between text-xs">
-                        <span class="text-gray-500 dark:text-gray-400 font-medium">Sisa Estimasi</span>
-                        <span class="font-semibold text-theme-accent">${estimasiText}</span>
-                    </div>
+                <div class="border-t border-gray-100 dark:border-gray-800/80 pt-3 flex items-center justify-between text-xs">
+                    <span class="text-gray-400 font-medium">Sisa Estimasi</span>
+                    <span class="font-bold text-emerald-500">${estimasiText}</span>
                 </div>
             </div>
         `;
@@ -1165,6 +1330,8 @@ function setFreqType(type) {
     if (type === 'Perhari' && btnH) btnH.className = activeClass;
     else if (type === 'Perminggu' && btnM) btnM.className = activeClass;
     else if (type === 'Perbulan' && btnB) btnB.className = activeClass;
+
+    calculateSavingsTargetSimulation();
 }
 
 function handleCurrencyChange(val) {
@@ -1189,6 +1356,7 @@ function openModalAddSavings() {
     setVal('inputSavingsId', "");
     setVal('inputTitle', "");
     setVal('inputTargetAmount', "");
+    setVal('inputTargetDeadline', "");
     setVal('inputFreqAmount', "");
     setVal('inputCurrency', "IDR|Rp|🇮🇩");
     handleCurrencyChange("IDR|Rp|🇮🇩");
@@ -1196,6 +1364,10 @@ function openModalAddSavings() {
     setVal('inputImage', "");
     setVal('inputFileImage', "");
     updateLivePreview("");
+
+    const infoBox = document.getElementById('calcSimulationInfo');
+    if (infoBox) infoBox.classList.add('hidden');
+
     document.getElementById('modalSavings')?.classList.remove('hidden');
 }
 
@@ -1215,6 +1387,7 @@ function openModalEditSavings() {
     setVal('inputSavingsId', item.id);
     setVal('inputTitle', item.title);
     setVal('inputTargetAmount', formatDots(item.targetAmount));
+    setVal('inputTargetDeadline', item.targetDeadline || "");
     setVal('inputFreqAmount', formatDots(item.freqAmount));
     setFreqType(item.freqType || "Perminggu");
 
@@ -1225,6 +1398,9 @@ function openModalEditSavings() {
     setVal('inputImage', item.imageUrl || "");
     setVal('inputFileImage', "");
     updateLivePreview(item.imageUrl || "");
+
+    calculateSavingsTargetSimulation();
+
     document.getElementById('modalSavings')?.classList.remove('hidden');
 }
 
@@ -1243,6 +1419,7 @@ async function handleSaveSavings(e) {
     const id = getVal('inputSavingsId');
     const title = getVal('inputTitle').trim();
     const targetAmount = parseNominal(getVal('inputTargetAmount'));
+    const targetDeadline = getVal('inputTargetDeadline');
     const freqAmount = parseNominal(getVal('inputFreqAmount'));
     const freqType = getVal('inputFreqType');
 
@@ -1257,6 +1434,7 @@ async function handleSaveSavings(e) {
         if (item) {
             item.title = title;
             item.targetAmount = targetAmount;
+            item.targetDeadline = targetDeadline;
             item.freqAmount = freqAmount;
             item.freqType = freqType;
             item.currencyCode = cCode;
@@ -1272,6 +1450,7 @@ async function handleSaveSavings(e) {
             id: 'savings-' + Date.now(),
             title: title,
             targetAmount: targetAmount,
+            targetDeadline: targetDeadline,
             freqAmount: freqAmount,
             freqType: freqType,
             currencyCode: cCode,
