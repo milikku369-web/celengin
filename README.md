@@ -1,7 +1,7 @@
 # Tabungin
 # TABUNGin - Web App Tabungan
 
-https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/step-1-register.jpg
+![Tampilan Bannernya](https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/bannernya.jpeg)
 🔗 **Situs aktif:** https://milikku369-web.github.io/tabungin/
 
 ## a. Judul & Deskripsi
