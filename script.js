@@ -29,6 +29,66 @@ const PRESET_IMAGES = {
     liburan: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80'
 };
 
+// MASTER GAMIFIKASI & BADGES
+const BADGES_DEFINITIONS = [
+    {
+        id: 'badge_first_deposit',
+        icon: 'fa-rocket',
+        title: 'Langkah Pertama 🚀',
+        desc: 'Melakukan setoran tabungan untuk pertama kali.',
+        color: 'from-amber-500 to-orange-500',
+        check: () => {
+            return savingsData.some(s => s.history && s.history.some(tx => tx.type === 'deposit'));
+        }
+    },
+    {
+        id: 'badge_active_saver',
+        icon: 'fa-piggy-bank',
+        title: 'Master Celengan 🐷',
+        desc: 'Memiliki minimal 3 celengan tabungan aktif.',
+        color: 'from-pink-500 to-rose-500',
+        check: () => {
+            return savingsData.length >= 3;
+        }
+    },
+    {
+        id: 'badge_goal_reached',
+        icon: 'fa-circle-check',
+        title: 'Impian Terwujud 🎯',
+        desc: 'Mencapai target 100% pada minimal 1 tabungan.',
+        color: 'from-emerald-500 to-teal-500',
+        check: () => {
+            return savingsData.some(s => calculatePercentage(s) >= 100);
+        }
+    },
+    {
+        id: 'badge_consistent_depositer',
+        icon: 'fa-fire',
+        title: 'Konsisten Menabung 🔥',
+        desc: 'Telah mencatatkan total 5 transaksi setoran.',
+        color: 'from-rose-500 to-red-600',
+        check: () => {
+            let count = 0;
+            savingsData.forEach(s => {
+                if (s.history) count += s.history.filter(tx => tx.type === 'deposit').length;
+            });
+            return count >= 5;
+        }
+    },
+    {
+        id: 'badge_millionaire',
+        icon: 'fa-gem',
+        title: 'Miliarder Muda 💎',
+        desc: 'Total terkumpul melebihi Rp 5.000.000.',
+        color: 'from-blue-500 to-indigo-600',
+        check: () => {
+            let total = 0;
+            savingsData.forEach(s => { total += calculateTerkumpul(s); });
+            return total >= 5000000;
+        }
+    }
+];
+
 // GLOBAL APP STATE & USER AUTH STATE
 let savingsData = [];
 let currentDetailId = null;
@@ -57,10 +117,67 @@ document.addEventListener('DOMContentLoaded', async () => {
     initFontAndColor();
     closeModalUsername();
     closeModalChangePassword();
+    closeModalBadges();
     updateUserUI();
     await loadStorage();
     initBrowserNotifications();
 });
+
+// GAMIFIKASI & BADGES SYSTEM
+function evaluateBadges() {
+    let unlockedCount = 0;
+
+    BADGES_DEFINITIONS.forEach(b => {
+        const isUnlocked = b.check();
+        if (isUnlocked) unlockedCount++;
+    });
+
+    const indicator = document.getElementById('badgeCountIndicator');
+    if (indicator) {
+        if (unlockedCount > 0) {
+            indicator.innerText = unlockedCount;
+            indicator.classList.remove('hidden');
+        } else {
+            indicator.classList.add('hidden');
+        }
+    }
+}
+
+function openModalBadges() {
+    document.getElementById('topMenu')?.classList.add('hidden');
+    renderBadgesList();
+    document.getElementById('modalBadges')?.classList.remove('hidden');
+}
+
+function closeModalBadges() {
+    document.getElementById('modalBadges')?.classList.add('hidden');
+}
+
+function renderBadgesList() {
+    const container = document.getElementById('badgesGridContainer');
+    if (!container) return;
+
+    container.innerHTML = BADGES_DEFINITIONS.map(b => {
+        const isUnlocked = b.check();
+
+        return `
+            <div class="p-3.5 rounded-2xl border ${isUnlocked ? 'bg-gradient-to-br ' + b.color + ' text-white border-transparent shadow-lg' : 'bg-gray-50 dark:bg-[#14141c] border-gray-200 dark:border-gray-800 opacity-60'} flex flex-col justify-between text-center transition">
+                <div>
+                    <div class="w-10 h-10 rounded-xl ${isUnlocked ? 'bg-white/20' : 'bg-gray-200 dark:bg-[#20202c] text-gray-400 dark:text-gray-500'} flex items-center justify-center mx-auto mb-2 text-lg">
+                        <i class="fa-solid ${b.icon}"></i>
+                    </div>
+                    <h4 class="font-bold text-xs ${isUnlocked ? 'text-white' : 'text-gray-800 dark:text-gray-200'}">${b.title}</h4>
+                    <p class="text-[10px] ${isUnlocked ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'} mt-1 leading-snug">${b.desc}</p>
+                </div>
+                <div class="mt-3">
+                    <span class="text-[9px] font-extrabold px-2 py-0.5 rounded-md ${isUnlocked ? 'bg-white/30 text-white' : 'bg-gray-200 dark:bg-[#20202c] text-gray-500 dark:text-gray-400'}">
+                        ${isUnlocked ? 'TERBUKA 🎉' : 'TERKUNCI 🔒'}
+                    </span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
 
 // HELPER PENGAMBILAN IP PUBLIK UNTUK PENCEGAHAN SPAM
 async function getPublicIP() {
@@ -387,6 +504,7 @@ async function loadStorage() {
             if (docSnap.exists && Array.isArray(docSnap.data().items)) {
                 savingsData = docSnap.data().items;
                 renderHome();
+                evaluateBadges();
                 return;
             }
         } catch (err) {
@@ -407,6 +525,7 @@ async function loadStorage() {
     }
 
     renderHome();
+    evaluateBadges();
 }
 
 function saveStorage() {
@@ -427,6 +546,8 @@ function saveStorage() {
             console.error("Gagal menyinkronkan ke cloud:", err);
         });
     }
+
+    evaluateBadges();
 }
 
 function confirmResetSampleData() {
@@ -573,7 +694,6 @@ function exportToPDF() {
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
 
-    // Direct open window agar lolos deteksi Pop-up Blocker browser
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
         showToast("Mohon izinkan Pop-up di peramban kamu!");
