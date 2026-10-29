@@ -151,7 +151,7 @@ async function validateUserSession() {
             const hoursPassed = (now - deleteTime) / (1000 * 60 * 60);
 
             if (hoursPassed >= 24) {
-                // Permanently delete after 24 hours
+                // Hapus permanen setelah 24 jam
                 await docRef.delete();
                 showToast("Masa pemulihan 24 jam telah berakhir. Akun dihapus permanen.");
                 forceLogoutSystem();
@@ -290,7 +290,7 @@ function closeModalChangePassword() {
     }
 }
 
-// FITUR 2: COOLDOWN 20 DETIK PADA TOMBOL HAPUS AKUN PERMANEN
+// COOLDOWN 20 DETIK PADA TOMBOL HAPUS AKUN PERMANEN
 function startDeleteAccountCooldown() {
     const btn = document.getElementById('btnDeleteAccount');
     if (!btn) return;
@@ -316,7 +316,7 @@ function startDeleteAccountCooldown() {
     }, 1000);
 }
 
-// FITUR 2: HAPUS AKUN PERMANEN (SOFT DELETE 24 JAM)
+// HAPUS AKUN PERMANEN (SOFT DELETE 24 JAM)
 async function handleSoftDeleteAccount() {
     if (!currentUser) {
         showToast("Kamu belum login!");
@@ -413,7 +413,7 @@ function switchAuthMode(mode) {
     const subtitle = document.getElementById('authSubtitle');
     const btn = document.getElementById('btnAuthSubmit');
     
-    const activeClass = "flex-1 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#282838] text-blue-600 dark:text-white shadow transition";
+    const activeClass = "flex-1 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#282838] text-theme-accent shadow transition";
     const inactiveClass = "flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition";
 
     if (mode === 'login') {
@@ -438,13 +438,14 @@ function togglePasswordVisibility() {
 
     if (passInput.type === 'password') {
         passInput.type = 'text';
-        passIcon.className = 'fa-solid fa-eye-slash text-xs text-blue-500';
+        passIcon.className = 'fa-solid fa-eye-slash text-xs text-theme-accent';
     } else {
         passInput.type = 'password';
         passIcon.className = 'fa-solid fa-eye text-xs';
     }
 }
 
+// PERBAIKAN: AUTO-LOGIN SETELAH PENDAFTARAN AKUN BARU
 async function handleAuthSubmit(e) {
     if (e) e.preventDefault();
 
@@ -519,7 +520,15 @@ async function handleAuthSubmit(e) {
                 });
             }
 
-            showToast(`Akun @${username} berhasil dibuat! 🎉`);
+            // SET SESI DAN LANGSUNG AUTO-LOGIN
+            currentUser = username;
+            localStorage.setItem('tabungin_username', currentUser);
+
+            loginAttempts = 0;
+            localStorage.setItem('tabungin_login_attempts', '0');
+            localStorage.removeItem('tabungin_lock_until');
+
+            showToast(`Akun @${username} berhasil dibuat & langsung masuk! 🎉`);
         } else {
             if (!docSnap.exists) {
                 showToast("Username tidak ditemukan! Silakan klik 'Daftar Baru'");
@@ -806,7 +815,7 @@ function calculateEstimasiText(item) {
     return `${sisaPeriode} ${unit} Lagi`;
 }
 
-// FITUR 1: KALKULATOR SIMULASI TARGET MENABUNG
+// KALKULATOR SIMULASI TARGET MENABUNG
 function calculateSavingsTargetSimulation() {
     const targetAmount = parseNominal(document.getElementById('inputTargetAmount')?.value);
     const deadlineVal = document.getElementById('inputTargetDeadline')?.value;
@@ -851,7 +860,6 @@ function calculateSavingsTargetSimulation() {
         labelUnit = "per minggu";
     }
 
-    // Isikan otomatis ke inputNominal
     const freqInput = document.getElementById('inputFreqAmount');
     if (freqInput) {
         freqInput.value = formatDots(requiredAmount);
@@ -1058,7 +1066,7 @@ function toggleSortOrder() {
     renderHome();
 }
 
-// FUNGSI RENDER HOME CARD (PERSIS DESAIN ASLI TAMPILAN KAMU)
+// RENDER HOME CARD
 function renderHome() {
     const container = document.getElementById('savingsListContainer') || document.getElementById('savingsList');
     const emptyState = document.getElementById('emptyState');
@@ -1115,31 +1123,34 @@ function renderHome() {
         const symbol = item.currencySymbol || 'Rp';
 
         return `
-            <div onclick="openDetailView('${item.id}')" class="bg-white dark:bg-[#181820] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/80 cursor-pointer transition active:scale-[0.99] space-y-4">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">${escapeHtml(item.title)}</h3>
+            <div onclick="openDetailView('${item.id}')" class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 hover:border-gray-300 dark:hover:border-gray-700 rounded-3xl p-5 shadow-xl cursor-pointer transition transform hover:-translate-y-1 active:scale-[0.99] flex flex-col justify-between space-y-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-wide truncate mb-3">${escapeHtml(item.title)}</h3>
 
-                <div class="w-full h-44 rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#22222e]">
-                    <img src="${img}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover">
-                </div>
-
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h4 class="text-2xl font-extrabold text-gray-900 dark:text-white">${formatCurrency(item.targetAmount, symbol)}</h4>
-                        <p class="text-xs text-gray-400 mt-0.5 font-medium">${formatCurrency(item.freqAmount, symbol)} ${escapeHtml(item.freqType || 'Perhari')}</p>
-                    </div>
-                    
-                    <div class="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
-                        <svg class="w-12 h-12 transform -rotate-90">
-                            <circle cx="24" cy="24" r="18" class="stroke-gray-100 dark:stroke-[#262634]" stroke-width="3.5" fill="transparent" />
-                            <circle cx="24" cy="24" r="18" stroke="currentColor" class="text-emerald-500" stroke-width="3.5" stroke-dasharray="113.09" stroke-dashoffset="${(113.09 - (113.09 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" />
-                        </svg>
-                        <span class="absolute text-[10px] font-bold text-gray-800 dark:text-white">${pct}%</span>
+                    <div class="w-full h-48 rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#22222e] flex items-center justify-center">
+                        <img src="${img}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/22222a/94a3b8?text=Impian+Kamu';">
                     </div>
                 </div>
 
-                <div class="border-t border-gray-100 dark:border-gray-800/80 pt-3 flex items-center justify-between text-xs">
-                    <span class="text-gray-400 font-medium">Sisa Estimasi</span>
-                    <span class="font-bold text-emerald-500">${estimasiText}</span>
+                <div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-2xl font-extrabold text-gray-900 dark:text-white">${formatCurrency(item.targetAmount, symbol)}</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">${formatCurrency(item.freqAmount, symbol)} ${escapeHtml(item.freqType || 'Perminggu')}</p>
+                        </div>
+                        <div class="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-14 h-14 transform -rotate-90">
+                                <circle cx="28" cy="28" r="22" class="stroke-gray-200 dark:stroke-[#282836]" stroke-width="4" fill="transparent" />
+                                <circle cx="28" cy="28" r="22" stroke="currentColor" class="text-theme-accent" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="${(138.23 - (138.23 * displayPct / 100)).toFixed(2)}" stroke-linecap="round" fill="transparent" class="transition-all duration-500 ease-out" />
+                            </svg>
+                            <span class="absolute text-[11px] font-bold text-gray-900 dark:text-white">${pct}%</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-100 dark:border-gray-800/80 mt-4 pt-3 flex items-center justify-between text-xs">
+                        <span class="text-gray-500 dark:text-gray-400 font-medium">Sisa Estimasi</span>
+                        <span class="font-semibold text-theme-accent">${estimasiText}</span>
+                    </div>
                 </div>
             </div>
         `;
