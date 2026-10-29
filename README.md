@@ -1,5 +1,5 @@
-# Gabungin
-# 🐷 TABUNGin - Web App Tabungan
+# Tabungin
+# TABUNGin - Web App Tabungan
 
 🔗 **Situs aktif:** https://milikku369-web.github.io/tabungin/
 
@@ -90,5 +90,5 @@ npx serve .
 |---|---|
 | **Nama lengkap** | Muhamad Riski Ramadan & Muhammad Duta Setiawan Pamungkas |
 | **Kelas** | [ XI ] |
-| **Jurusan** | [ INFORMATIKA LANJUT ]
+| **Jurusan** | [ IPA ]
 | **Asal sekolah** | [ SMAN 1 GONDANGLEGI ] |
