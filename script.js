@@ -9,6 +9,7 @@ const firebaseConfig = {
     measurementId: "G-8X433506J"
 };
 
+// Inisialisasi Firebase & Firestore
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -36,7 +37,9 @@ const BADGES_DEFINITIONS = [
         title: 'Langkah Pertama 🚀',
         desc: 'Melakukan setoran tabungan untuk pertama kali.',
         color: 'from-amber-500 to-orange-500',
-        check: () => savingsData.some(s => s.history && s.history.some(tx => tx.type === 'deposit'))
+        check: () => {
+            return savingsData.some(s => s.history && s.history.some(tx => tx.type === 'deposit'));
+        }
     },
     {
         id: 'badge_active_saver',
@@ -44,7 +47,9 @@ const BADGES_DEFINITIONS = [
         title: 'Master Celengan 🐷',
         desc: 'Memiliki minimal 3 celengan tabungan aktif.',
         color: 'from-pink-500 to-rose-500',
-        check: () => savingsData.length >= 3
+        check: () => {
+            return savingsData.length >= 3;
+        }
     },
     {
         id: 'badge_goal_reached',
@@ -52,7 +57,9 @@ const BADGES_DEFINITIONS = [
         title: 'Impian Terwujud 🎯',
         desc: 'Mencapai target 100% pada minimal 1 tabungan.',
         color: 'from-emerald-500 to-teal-500',
-        check: () => savingsData.some(s => calculatePercentage(s) >= 100)
+        check: () => {
+            return savingsData.some(s => calculatePercentage(s) >= 100);
+        }
     },
     {
         id: 'badge_consistent_depositer',
@@ -62,7 +69,9 @@ const BADGES_DEFINITIONS = [
         color: 'from-rose-500 to-red-600',
         check: () => {
             let count = 0;
-            savingsData.forEach(s => { if (s.history) count += s.history.filter(tx => tx.type === 'deposit').length; });
+            savingsData.forEach(s => {
+                if (s.history) count += s.history.filter(tx => tx.type === 'deposit').length;
+            });
             return count >= 5;
         }
     },
@@ -93,13 +102,12 @@ let selectedTxIdForModal = null;
 // USER MANAGEMENT STATE
 let currentUser = localStorage.getItem('tabungin_username') || '';
 let currentAuthMode = 'login';
-let deleteAccountTimer = null;
 
-// STATE KEAMANAN LOGIN
+// STATE KEAMANAN LOGIN (BRUTE FORCE LIMITING)
 let loginAttempts = parseInt(localStorage.getItem('tabungin_login_attempts') || '0');
 let lockUntil = parseInt(localStorage.getItem('tabungin_lock_until') || '0');
 
-// PREFERENSI TAMPILAN
+// PREFERENSI TAMPILAN (FONT & WARNA TEMA)
 let currentFont = localStorage.getItem('tabungin_font') || 'sans';
 let currentAccentColor = localStorage.getItem('tabungin_accent_color') || 'blue';
 
@@ -115,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initBrowserNotifications();
 });
 
-// VALIDASI SESI KEAMANAN
+// VALIDASI SESI KEAMANAN OTOMATIS
 async function validateUserSession() {
     if (!currentUser || !db) return true;
 
@@ -124,23 +132,9 @@ async function validateUserSession() {
         const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
-            showToast("Akun kamu tidak ditemukan di sistem!");
+            showToast("Akun kamu telah dihapus dari sistem!");
             forceLogoutSystem();
             return false;
-        }
-
-        const data = docSnap.data();
-        if (data.isDeleted) {
-            const deleteTime = data.deletedAt?.toMillis() || 0;
-            const now = Date.now();
-            const twentyFourHours = 24 * 60 * 60 * 1000;
-
-            if (now - deleteTime > twentyFourHours) {
-                await docRef.delete();
-                showToast("Masa pemulihan berakhir. Akun dihapus permanen.");
-                forceLogoutSystem();
-                return false;
-            }
         }
 
         return true;
@@ -165,70 +159,14 @@ function forceLogoutSystem() {
     loadStorage();
 }
 
-// 1. FITUR SIMULASI KALKULATOR MENABUNG OTOMATIS
-function calculateSavingsTargetSimulation() {
-    const targetInput = document.getElementById('inputTargetAmount');
-    const deadlineInput = document.getElementById('inputTargetDeadline');
-    const freqTypeInput = document.getElementById('inputFreqType');
-    const freqAmountInput = document.getElementById('inputFreqAmount');
-    const calcInfoBox = document.getElementById('calcSimulationInfo');
-
-    if (!targetInput || !deadlineInput || !freqTypeInput || !freqAmountInput) return;
-
-    const targetAmount = parseNominal(targetInput.value);
-    const deadlineValue = deadlineInput.value;
-    const freqType = freqTypeInput.value;
-
-    if (!targetAmount || targetAmount <= 0 || !deadlineValue) {
-        if (calcInfoBox) calcInfoBox.classList.add('hidden');
-        return;
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const deadlineDate = new Date(deadlineValue);
-    
-    const timeDiff = deadlineDate.getTime() - today.getTime();
-    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-    if (daysDiff <= 0) {
-        if (calcInfoBox) {
-            calcInfoBox.classList.remove('hidden');
-            calcInfoBox.innerText = "⚠️ Tanggal deadline harus lebih dari hari ini!";
-            calcInfoBox.className = "text-[11px] text-rose-500 font-semibold mt-1 bg-rose-50 dark:bg-rose-950/30 p-2 rounded-xl border border-rose-200 dark:border-rose-800/50";
-        }
-        return;
-    }
-
-    let resultAmount = 0;
-    let periodText = "";
-
-    if (freqType === 'Perhari') {
-        resultAmount = Math.ceil(targetAmount / daysDiff);
-        periodText = `${daysDiff} hari`;
-    } else if (freqType === 'Perminggu') {
-        const weeks = Math.ceil(daysDiff / 7);
-        resultAmount = Math.ceil(targetAmount / Math.max(1, weeks));
-        periodText = `${weeks} minggu`;
-    } else if (freqType === 'Perbulan') {
-        const months = Math.ceil(daysDiff / 30);
-        resultAmount = Math.ceil(targetAmount / Math.max(1, months));
-        periodText = `${months} bulan`;
-    }
-
-    freqAmountInput.value = formatDots(resultAmount);
-
-    if (calcInfoBox) {
-        calcInfoBox.classList.remove('hidden');
-        calcInfoBox.className = "text-[11px] text-theme-accent font-medium mt-1 bg-theme-light p-2 rounded-xl border border-theme-accent/30";
-        calcInfoBox.innerHTML = `💡 Perhitungan Otomatis: Tabung <strong>${formatCurrency(resultAmount)}</strong> / ${freqType.replace('Per', '')} selama <strong>${periodText}</strong>.`;
-    }
-}
-
 // GAMIFIKASI & BADGES SYSTEM
 function evaluateBadges() {
     let unlockedCount = 0;
-    BADGES_DEFINITIONS.forEach(b => { if (b.check()) unlockedCount++; });
+
+    BADGES_DEFINITIONS.forEach(b => {
+        const isUnlocked = b.check();
+        if (isUnlocked) unlockedCount++;
+    });
 
     const indicator = document.getElementById('badgeCountIndicator');
     if (indicator) {
@@ -257,6 +195,7 @@ function renderBadgesList() {
 
     container.innerHTML = BADGES_DEFINITIONS.map(b => {
         const isUnlocked = b.check();
+
         return `
             <div class="p-3.5 rounded-2xl border ${isUnlocked ? 'bg-gradient-to-br ' + b.color + ' text-white border-transparent shadow-lg' : 'bg-gray-50 dark:bg-[#14141c] border-gray-200 dark:border-gray-800 opacity-60'} flex flex-col justify-between text-center transition">
                 <div>
@@ -276,12 +215,14 @@ function renderBadgesList() {
     }).join('');
 }
 
+// HELPER PENGAMBILAN IP PUBLIK UNTUK PENCEGAHAN SPAM
 async function getPublicIP() {
     try {
         const response = await fetch('https://api.ipify.org?format=json');
         const data = await response.json();
         return data.ip;
     } catch (err) {
+        console.warn("Gagal mengambil IP Publik:", err);
         return "unknown_ip";
     }
 }
@@ -301,217 +242,11 @@ function openModalChangePassword() {
     document.getElementById('topMenu')?.classList.add('hidden');
     if (document.getElementById('inputOldPassword')) document.getElementById('inputOldPassword').value = '';
     if (document.getElementById('inputNewPassword')) document.getElementById('inputNewPassword').value = '';
-    
-    startDeleteCooldownTimer();
     document.getElementById('modalChangePassword')?.classList.remove('hidden');
 }
 
 function closeModalChangePassword() {
-    if (deleteAccountTimer) clearInterval(deleteAccountTimer);
     document.getElementById('modalChangePassword')?.classList.add('hidden');
-}
-
-// 2. TIMING COOLDOWN 20 DETIK UNTUK TOMBOL HAPUS AKUN PERMANEN
-function startDeleteCooldownTimer() {
-    const btnDelete = document.getElementById('btnDeleteAccount');
-    if (!btnDelete) return;
-
-    let countdown = 20;
-    btnDelete.disabled = true;
-    btnDelete.className = "w-full py-2.5 bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed font-semibold rounded-xl text-xs transition";
-    btnDelete.innerText = `Hapus Akun Permanen (${countdown}s)`;
-
-    if (deleteAccountTimer) clearInterval(deleteAccountTimer);
-
-    deleteAccountTimer = setInterval(() => {
-        countdown--;
-        if (countdown > 0) {
-            btnDelete.innerText = `Hapus Akun Permanen (${countdown}s)`;
-        } else {
-            clearInterval(deleteAccountTimer);
-            btnDelete.disabled = false;
-            btnDelete.className = "w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs transition active:scale-95 shadow-md";
-            btnDelete.innerText = "Hapus Akun Permanen";
-        }
-    }, 1000);
-}
-
-// 2. PROSES SOFT-DELETE AKUN (DAPAT DIPULIHKAN 24 JAM)
-async function handleSoftDeleteAccount() {
-    if (!currentUser || !db) return;
-
-    const oldPassword = document.getElementById('inputOldPassword')?.value || "";
-    if (!oldPassword) {
-        showToast("Masukkan kata sandi lama untuk konfirmasi hapus akun!");
-        return;
-    }
-
-    if (!confirm("Apakah Anda yakin ingin menghapus akun ini? Anda memiliki waktu 24 jam untuk memulihkannya sebelum dihapus permanen.")) {
-        return;
-    }
-
-    try {
-        const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
-        const docSnap = await docRef.get();
-
-        if (!docSnap.exists) {
-            showToast("Akun tidak ditemukan!");
-            return;
-        }
-
-        const userData = docSnap.data();
-        if (userData.password && userData.password !== oldPassword) {
-            showToast("Kata sandi salah! Konfirmasi penghapusan gagal.");
-            return;
-        }
-
-        await docRef.update({
-            isDeleted: true,
-            deletedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        showToast("Akun berhasil dihapus. Kirim login kembali dalam 24 jam untuk memulihkan.");
-        forceLogoutSystem();
-    } catch (err) {
-        console.error("Gagal menghapus akun:", err);
-        showToast("Gagal memproses penghapusan akun!");
-    }
-}
-
-// PROSES LOGIN & PEMULIHAN AKUN (RESTORE)
-async function handleAuthSubmit(e) {
-    if (e) e.preventDefault();
-
-    const now = Date.now();
-    if (currentAuthMode === 'login' && lockUntil > now) {
-        const remainingSeconds = Math.ceil((lockUntil - now) / 1000);
-        showToast(`Akses terkunci! Silakan tunggu ${remainingSeconds} detik lagi.`);
-        return;
-    }
-
-    const rawInput = document.getElementById('inputAuthUsername')?.value || "";
-    const password = document.getElementById('inputAuthPassword')?.value || "";
-    const username = rawInput.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-
-    if (!username || username.length < 3 || !password || password.length < 4) {
-        showToast("Username min 3 karakter, Password min 4 karakter!");
-        return;
-    }
-
-    if (!db) {
-        showToast("Koneksi database Firebase belum siap!");
-        return;
-    }
-
-    try {
-        const docRef = db.collection(COLLECTION_NAME).doc(username);
-        const docSnap = await docRef.get();
-
-        if (currentAuthMode === 'register') {
-            const userIP = await getPublicIP();
-            const twelveHoursInMs = 12 * 60 * 60 * 1000;
-
-            if (userIP !== "unknown_ip") {
-                const ipDocRef = db.collection("ip_registers").doc(userIP.replace(/\./g, '_'));
-                const ipSnap = await ipDocRef.get();
-
-                if (ipSnap.exists) {
-                    const lastRegisterTime = ipSnap.data().lastRegisterAt?.toMillis() || 0;
-                    if (now - lastRegisterTime < twelveHoursInMs) {
-                        const remainingHours = Math.ceil((twelveHoursInMs - (now - lastRegisterTime)) / (1000 * 60 * 60));
-                        showToast(`IP ini baru saja mendaftar. Silakan coba lagi dalam ${remainingHours} jam!`);
-                        return;
-                    }
-                }
-            }
-
-            if (docSnap.exists) {
-                showToast("Username sudah dipakai!");
-                return;
-            }
-
-            savingsData = [];
-            await docRef.set({
-                username: username,
-                password: password,
-                items: [],
-                isDeleted: false,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            if (userIP !== "unknown_ip") {
-                await db.collection("ip_registers").doc(userIP.replace(/\./g, '_')).set({
-                    ip: userIP,
-                    lastRegisterAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-
-            showToast(`Akun @${username} berhasil dibuat! 🎉`);
-        } else {
-            if (!docSnap.exists) {
-                showToast("Username tidak ditemukan!");
-                return;
-            }
-
-            const userData = docSnap.data();
-            if (userData.password && userData.password !== password) {
-                loginAttempts += 1;
-                localStorage.setItem('tabungin_login_attempts', loginAttempts);
-
-                if (loginAttempts >= 5) {
-                    lockUntil = Date.now() + 60000;
-                    localStorage.setItem('tabungin_lock_until', lockUntil);
-                    loginAttempts = 0;
-                    localStorage.setItem('tabungin_login_attempts', '0');
-                    showToast("Gagal login 5x! Akses login dikunci selama 1 menit.");
-                } else {
-                    showToast(`Kata sandi salah! Sisa percobaan: ${5 - loginAttempts}`);
-                }
-                return;
-            }
-
-            // CEK OPSIONAL PEMULIHAN AKUN SOFT DELETE (DALAM 24 JAM)
-            if (userData.isDeleted) {
-                const deleteTime = userData.deletedAt?.toMillis() || 0;
-                const twentyFourHours = 24 * 60 * 60 * 1000;
-
-                if (now - deleteTime < twentyFourHours) {
-                    if (confirm("Akun ini sedang dalam proses penghapusan. Apakah Anda ingin memulihkan akun ini kembali?")) {
-                        await docRef.update({
-                            isDeleted: false,
-                            deletedAt: firebase.firestore.FieldValue.delete()
-                        });
-                        showToast("Akun berhasil dipulihkan kembali! 🎉");
-                    } else {
-                        showToast("Login dibatalkan karena akun dalam masa penghapusan.");
-                        return;
-                    }
-                } else {
-                    await docRef.delete();
-                    showToast("Akun ini telah dihapus secara permanen.");
-                    return;
-                }
-            }
-
-            loginAttempts = 0;
-            localStorage.setItem('tabungin_login_attempts', '0');
-            localStorage.removeItem('tabungin_lock_until');
-
-            savingsData = userData.items || [];
-            showToast(`Selamat datang kembali, @${username}!`);
-        }
-
-        currentUser = username;
-        localStorage.setItem('tabungin_username', currentUser);
-        closeModalUsername();
-
-        saveStorage();
-        updateUserUI();
-        renderHome();
-    } catch (err) {
-        console.error("Gagal autentikasi:", err);
-        showToast("Gagal terhubung ke server database!");
-    }
 }
 
 async function handleChangePasswordSubmit(e) {
@@ -528,8 +263,18 @@ async function handleChangePasswordSubmit(e) {
     const oldPassword = document.getElementById('inputOldPassword')?.value || "";
     const newPassword = document.getElementById('inputNewPassword')?.value || "";
 
-    if (!oldPassword || !newPassword || newPassword.length < 4) {
+    if (!oldPassword) {
+        showToast("Masukkan kata sandi lama!");
+        return;
+    }
+
+    if (!newPassword || newPassword.length < 4) {
         showToast("Kata sandi baru minimal 4 karakter!");
+        return;
+    }
+
+    if (!db) {
+        showToast("Koneksi database Firebase belum siap!");
         return;
     }
 
@@ -557,6 +302,7 @@ async function handleChangePasswordSubmit(e) {
         showToast("Kata sandi berhasil diperbarui! 🔑");
         closeModalChangePassword();
     } catch (err) {
+        console.error("Gagal mengganti kata sandi:", err);
         showToast("Gagal memperbarui kata sandi!");
     }
 }
@@ -601,6 +347,128 @@ function togglePasswordVisibility() {
     }
 }
 
+async function handleAuthSubmit(e) {
+    if (e) e.preventDefault();
+
+    const now = Date.now();
+
+    if (currentAuthMode === 'login' && lockUntil > now) {
+        const remainingSeconds = Math.ceil((lockUntil - now) / 1000);
+        showToast(`Akses terkunci! Silakan tunggu ${remainingSeconds} detik lagi.`);
+        return;
+    }
+
+    const rawInput = document.getElementById('inputAuthUsername')?.value || "";
+    const password = document.getElementById('inputAuthPassword')?.value || "";
+    const username = rawInput.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+    if (!username || username.length < 3) {
+        showToast("Username minimal 3 karakter!");
+        return;
+    }
+
+    if (!password || password.length < 4) {
+        showToast("Kata sandi minimal 4 karakter!");
+        return;
+    }
+
+    if (!db) {
+        showToast("Koneksi database Firebase belum siap!");
+        return;
+    }
+
+    try {
+        const docRef = db.collection(COLLECTION_NAME).doc(username);
+        const docSnap = await docRef.get();
+
+        if (currentAuthMode === 'register') {
+            const userIP = await getPublicIP();
+            const twelveHoursInMs = 12 * 60 * 60 * 1000;
+
+            if (userIP !== "unknown_ip") {
+                const ipDocRef = db.collection("ip_registers").doc(userIP.replace(/\./g, '_'));
+                const ipSnap = await ipDocRef.get();
+
+                if (ipSnap.exists) {
+                    const lastRegisterTime = ipSnap.data().lastRegisterAt?.toMillis() || 0;
+                    if (now - lastRegisterTime < twelveHoursInMs) {
+                        const remainingHours = Math.ceil((twelveHoursInMs - (now - lastRegisterTime)) / (1000 * 60 * 60));
+                        showToast(`IP ini baru saja mendaftar. Silakan coba lagi dalam ${remainingHours} jam!`);
+                        return;
+                    }
+                }
+            }
+
+            if (docSnap.exists) {
+                showToast("Username sudah dipakai, pilih username lain!");
+                return;
+            }
+
+            savingsData = [];
+
+            await docRef.set({
+                username: username,
+                password: password,
+                items: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            if (userIP !== "unknown_ip") {
+                await db.collection("ip_registers").doc(userIP.replace(/\./g, '_')).set({
+                    ip: userIP,
+                    lastRegisterAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            showToast(`Akun @${username} berhasil dibuat! 🎉`);
+        } else {
+            if (!docSnap.exists) {
+                showToast("Username tidak ditemukan! Silakan klik 'Daftar Baru'");
+                return;
+            }
+
+            const userData = docSnap.data();
+            if (userData.password && userData.password !== password) {
+                loginAttempts += 1;
+                localStorage.setItem('tabungin_login_attempts', loginAttempts);
+
+                if (loginAttempts >= 5) {
+                    lockUntil = Date.now() + 60000;
+                    localStorage.setItem('tabungin_lock_until', lockUntil);
+                    loginAttempts = 0;
+                    localStorage.setItem('tabungin_login_attempts', '0');
+                    showToast("Gagal login 5x! Akses login dikunci selama 1 menit.");
+                } else {
+                    showToast(`Kata sandi salah! Sisa percobaan: ${5 - loginAttempts}`);
+                }
+                return;
+            }
+
+            loginAttempts = 0;
+            localStorage.setItem('tabungin_login_attempts', '0');
+            localStorage.removeItem('tabungin_lock_until');
+
+            savingsData = userData.items || [];
+            showToast(`Selamat datang kembali, @${username}!`);
+        }
+
+        currentUser = username;
+        localStorage.setItem('tabungin_username', currentUser);
+        closeModalUsername();
+
+        if (document.getElementById('inputAuthPassword')) {
+            document.getElementById('inputAuthPassword').value = '';
+        }
+
+        saveStorage();
+        updateUserUI();
+        renderHome();
+    } catch (err) {
+        console.error("Gagal autentikasi:", err);
+        showToast("Gagal terhubung ke server database!");
+    }
+}
+
 function handleLogout() {
     document.getElementById('topMenu')?.classList.add('hidden');
     forceLogoutSystem();
@@ -623,13 +491,13 @@ function updateUserUI() {
     } else {
         if (label) label.innerText = '@Guest (Tamu)';
         if (loginBtn) loginBtn.classList.remove('hidden');
-        if (changePassBtn) changePassBtn.add('hidden');
+        if (changePassBtn) changePassBtn.classList.add('hidden');
         if (logoutBtn) logoutBtn.classList.add('hidden');
         if (guestBanner) guestBanner.classList.remove('hidden');
     }
 }
 
-// STORAGE MANAGEMENT
+// STORAGE MANAGEMENT DENGAN PROTEKSI AKUN HANTU
 async function loadStorage() {
     if (currentUser && db) {
         try {
@@ -637,13 +505,7 @@ async function loadStorage() {
             const docSnap = await docRef.get();
 
             if (docSnap.exists) {
-                const data = docSnap.data();
-                if (data.isDeleted) {
-                    showToast("Sesi berakhir, akun sedang dalam proses penghapusan.");
-                    forceLogoutSystem();
-                    return;
-                }
-                savingsData = Array.isArray(data.items) ? data.items : [];
+                savingsData = Array.isArray(docSnap.data().items) ? docSnap.data().items : [];
                 renderHome();
                 evaluateBadges();
                 return;
@@ -769,7 +631,8 @@ function formatDots(num) {
 }
 
 function formatCurrency(amount, symbol = 'Rp') {
-    return `${symbol} ${formatDots(amount)}`;
+    const formatted = formatDots(amount);
+    return `${symbol} ${formatted}`;
 }
 
 function handleFormattedInput(inputElement) {
@@ -788,8 +651,6 @@ function handleFormattedInput(inputElement) {
     const newLength = inputElement.value.length;
     const diff = newLength - originalLength;
     inputElement.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
-
-    calculateSavingsTargetSimulation();
 }
 
 function clearInput(elementId) {
@@ -797,7 +658,6 @@ function clearInput(elementId) {
     if (elem) {
         elem.value = "";
         elem.focus();
-        calculateSavingsTargetSimulation();
     }
 }
 
@@ -824,7 +684,8 @@ function calculateTerkumpul(item) {
 function calculatePercentage(item) {
     if (!item || !item.targetAmount || item.targetAmount <= 0) return 0;
     const terkumpul = calculateTerkumpul(item);
-    return Math.max(0, Math.round((terkumpul / item.targetAmount) * 100));
+    const pct = Math.round((terkumpul / item.targetAmount) * 100);
+    return Math.max(0, pct);
 }
 
 function calculateEstimasiText(item) {
@@ -838,7 +699,7 @@ function calculateEstimasiText(item) {
     return `${sisaPeriode} ${unit} Lagi`;
 }
 
-// EKSPOR PDF
+// FUNGSI EKSPOR PDF (ANTI POP-UP BLOCKED)
 function exportToPDF() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -1209,6 +1070,7 @@ function renderDetailHistory(item) {
     }).join('');
 }
 
+// LIVE PREVIEW & AUTOMATIC COMPRESSION
 function updateLivePreview(url) {
     const previewImg = document.getElementById('modalImgPreview');
     const placeholder = document.getElementById('modalImgPlaceholder');
@@ -1230,7 +1092,7 @@ function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const MAX_FILE_SIZE = 1 * 1024 * 1024;
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
     if (file.size > MAX_FILE_SIZE) {
         showToast("Ukuran foto terlalu besar! Maksimal 1 MB.");
         e.target.value = "";
@@ -1286,6 +1148,7 @@ function setPresetImg(key) {
     }
 }
 
+// MODAL CELENGAN DENGAN CHECK VALIDASI
 function setFreqType(type) {
     const freqInput = document.getElementById('inputFreqType');
     if (freqInput) freqInput.value = type;
@@ -1302,8 +1165,6 @@ function setFreqType(type) {
     if (type === 'Perhari' && btnH) btnH.className = activeClass;
     else if (type === 'Perminggu' && btnM) btnM.className = activeClass;
     else if (type === 'Perbulan' && btnB) btnB.className = activeClass;
-
-    calculateSavingsTargetSimulation();
 }
 
 function handleCurrencyChange(val) {
@@ -1328,7 +1189,6 @@ function openModalAddSavings() {
     setVal('inputSavingsId', "");
     setVal('inputTitle', "");
     setVal('inputTargetAmount', "");
-    setVal('inputTargetDeadline', "");
     setVal('inputFreqAmount', "");
     setVal('inputCurrency', "IDR|Rp|🇮🇩");
     handleCurrencyChange("IDR|Rp|🇮🇩");
@@ -1336,10 +1196,6 @@ function openModalAddSavings() {
     setVal('inputImage', "");
     setVal('inputFileImage', "");
     updateLivePreview("");
-    
-    const calcInfoBox = document.getElementById('calcSimulationInfo');
-    if (calcInfoBox) calcInfoBox.classList.add('hidden');
-
     document.getElementById('modalSavings')?.classList.remove('hidden');
 }
 
@@ -1359,7 +1215,6 @@ function openModalEditSavings() {
     setVal('inputSavingsId', item.id);
     setVal('inputTitle', item.title);
     setVal('inputTargetAmount', formatDots(item.targetAmount));
-    setVal('inputTargetDeadline', item.targetDeadline || "");
     setVal('inputFreqAmount', formatDots(item.freqAmount));
     setFreqType(item.freqType || "Perminggu");
 
@@ -1370,8 +1225,6 @@ function openModalEditSavings() {
     setVal('inputImage', item.imageUrl || "");
     setVal('inputFileImage', "");
     updateLivePreview(item.imageUrl || "");
-    
-    calculateSavingsTargetSimulation();
     document.getElementById('modalSavings')?.classList.remove('hidden');
 }
 
@@ -1390,7 +1243,6 @@ async function handleSaveSavings(e) {
     const id = getVal('inputSavingsId');
     const title = getVal('inputTitle').trim();
     const targetAmount = parseNominal(getVal('inputTargetAmount'));
-    const targetDeadline = getVal('inputTargetDeadline');
     const freqAmount = parseNominal(getVal('inputFreqAmount'));
     const freqType = getVal('inputFreqType');
 
@@ -1405,7 +1257,6 @@ async function handleSaveSavings(e) {
         if (item) {
             item.title = title;
             item.targetAmount = targetAmount;
-            item.targetDeadline = targetDeadline;
             item.freqAmount = freqAmount;
             item.freqType = freqType;
             item.currencyCode = cCode;
@@ -1421,7 +1272,6 @@ async function handleSaveSavings(e) {
             id: 'savings-' + Date.now(),
             title: title,
             targetAmount: targetAmount,
-            targetDeadline: targetDeadline,
             freqAmount: freqAmount,
             freqType: freqType,
             currencyCode: cCode,
@@ -1443,6 +1293,7 @@ async function handleSaveSavings(e) {
     closeModalSavings();
 }
 
+// MODAL TRANSACTION DENGAN CHECK VALIDASI
 function openModalTransaction() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -1558,6 +1409,7 @@ async function handleSaveTransaction(e) {
     editingTxId = null;
 }
 
+// TRANSACTION DETAIL POPUP
 function openModalTxDetail(txId) {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -1653,6 +1505,7 @@ async function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
+// BROWSER NOTIFICATIONS HANDLER
 function initBrowserNotifications() {
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
@@ -1730,6 +1583,7 @@ function toggleReminderState(enabled) {
     showToast(enabled ? "Pengingat diaktifkan ⏰" : "Pengingat dinonaktifkan");
 }
 
+// DELETE CELENGAN
 function confirmDeleteSavings() {
     document.getElementById('modalConfirmDelete')?.classList.remove('hidden');
 }
@@ -1751,6 +1605,7 @@ async function executeDeleteSavings() {
     showToast("Celengan berhasil dihapus");
 }
 
+// TOAST HELPER
 function showToast(msg) {
     const toast = document.getElementById('toast');
     const toastMsg = document.getElementById('toastMsg');
@@ -1768,6 +1623,7 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
+// PENGATURAN FONT DAN TEMA WARNA DINAMIS
 function initFontAndColor() {
     changeFont(currentFont, false);
     changeAccentColor(currentAccentColor, false);
@@ -1828,20 +1684,27 @@ function changeAccentColor(color, notify = true) {
     Object.keys(colorBtns).forEach(key => {
         const btn = colorBtns[key];
         if (btn) {
-            btn.innerHTML = key === color ? `<i class="fa-solid fa-check text-white text-[10px]"></i>` : ``;
+            if (key === color) {
+                btn.innerHTML = `<i class="fa-solid fa-check text-white text-[10px]"></i>`;
+            } else {
+                btn.innerHTML = ``;
+            }
         }
     });
 
     if (notify) showToast(`Warna tema diubah ke ${color}`);
 }
 
+// TEMA GELAP / TERANG / SISTEM
 function initTheme() {
     const savedTheme = localStorage.getItem('app_theme') || 'system';
     applyTheme(savedTheme);
 
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
         const currentTheme = localStorage.getItem('app_theme') || 'system';
-        if (currentTheme === 'system') applyTheme('system');
+        if (currentTheme === 'system') {
+            applyTheme('system');
+        }
     });
 }
 
@@ -1868,8 +1731,11 @@ function applyTheme(theme) {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
 
-    if (isDark) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
+    if (isDark) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
 
     updateThemeUI(theme);
 }
@@ -1896,9 +1762,13 @@ function updateThemeUI(theme) {
     const sunIcon = document.getElementById('themeSunIcon');
 
     if (iconElem) {
-        if (theme === 'system') iconElem.className = 'fa-solid fa-desktop text-sm';
-        else if (theme === 'dark') iconElem.className = 'fa-solid fa-moon text-sm';
-        else iconElem.className = 'fa-solid fa-sun text-sm';
+        if (theme === 'system') {
+            iconElem.className = 'fa-solid fa-desktop text-sm';
+        } else if (theme === 'dark') {
+            iconElem.className = 'fa-solid fa-moon text-sm';
+        } else {
+            iconElem.className = 'fa-solid fa-sun text-sm';
+        }
     }
 
     if (moonIcon && sunIcon) {
