@@ -10,7 +10,7 @@
 
 **Latar belakang masalah:** 
 
-Kurang Motivasi & Lupa Progress: Nabung di celengan fisik sering bikin malas karena jumlah uangnya tidak kelihatan secara visual dan tidak tahu sudah berapa persen m*enuju target.
+Kurang Motivasi & Lupa Progress: Nabung di celengan fisik sering bikin malas karena jumlah uangnya tidak kelihatan secara visual dan tidak tahu sudah berapa persen menuju target.
 
 Bingung Menghitung Target: Banyak siswa bingung harus mengalokasikan uang jajan berapa per hari agar targetnya tercapai di tanggal tertentu.
 
