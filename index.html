@@ -3,650 +3,654 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TABUNGin</title>
+    <title>TABUNGin - Celengan & Tabungan Impian</title>
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts (Poppins) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        darkBg: '#0d0d0f',
-                        cardBg: '#181820',
-                        cardBorder: '#282836',
-                        inputBg: '#1e1e28',
-                    },
-                    fontFamily: {
-                        sans: ['Poppins', 'sans-serif'],
-                        serif: ['Merriweather', 'serif'],
-                        mono: ['Fira Code', 'monospace']
+                        'theme-accent': 'var(--accent-color, #3b82f6)',
+                        'theme-accent-hover': 'var(--accent-hover, #2563eb)',
+                        'theme-light': 'var(--accent-light-bg, rgba(59, 130, 246, 0.15))',
                     }
                 }
             }
         }
     </script>
-    <!-- FontAwesome CDN for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Merriweather:wght@400;700&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Canvas Confetti CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- SDK ONESIGNAL PUSH NOTIFICATION -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "0e5957d5-5a71-4e6c-a97b-317604fe8e94",
-          safari_web_id: "web.onesignal.auto.3d9f0610-6ae1-419f-862e-705396ff3ef1",
-          notifyButton: {
-            enable: true,
-          },
-        });
-      });
-    </script>
-    <!-- Custom CSS External -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="bg-gray-100 dark:bg-[#0d0d0f] text-gray-800 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
 
-    <!-- Top Global Navbar -->
-    <header class="w-full bg-white/90 dark:bg-[#121218]/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800/80 sticky top-0 z-30">
-        <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3 cursor-pointer" onclick="showView('home')">
-                <div class="w-10 h-10 rounded-2xl overflow-hidden border border-theme-accent shadow-lg flex items-center justify-center bg-white dark:bg-[#1a1a24] flex-shrink-0">
-                    <img src="logo.png" alt="Logo TABUNGin" class="w-full h-full object-cover" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2953/2953361.png'">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.3);
+            border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(75, 85, 99, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#0d0d12] text-gray-800 dark:text-gray-100 min-h-screen pb-24 transition-colors duration-200">
+
+    <!-- NAVBAR TOP -->
+    <header class="sticky top-0 z-30 bg-white/80 dark:bg-[#12121a]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800/80 transition">
+        <div class="max-w-xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div onclick="showView('home')" class="flex items-center space-x-2.5 cursor-pointer">
+                <div class="w-10 h-10 rounded-2xl bg-theme-accent flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                    <i class="fa-solid fa-piggy-bank text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
-                        TABUNGin
-                        <span class="text-[10px] bg-theme-light text-theme-accent border border-theme-accent px-2 py-0.5 rounded-full font-medium hidden sm:inline-block">Web App</span>
-                    </h1>
+                    <h1 class="font-extrabold text-lg leading-none tracking-tight text-gray-900 dark:text-white">TABUNGin</h1>
+                    <span id="currentUsernameLabel" class="text-[10px] text-gray-500 dark:text-gray-400 font-medium">@Guest (Tamu)</span>
                 </div>
             </div>
 
-            <!-- Header Actions -->
-            <div class="flex items-center gap-2.5">
-                <button onclick="openModalAddSavings()" class="hidden sm:flex items-center gap-2 bg-theme-accent text-white font-medium px-4 py-2 rounded-xl text-xs shadow-lg transition active:scale-95">
-                    <i class="fa-solid fa-plus text-white"></i>
-                    <span class="text-white">Tambah Tabungan</span>
-                </button>
-
-                <!-- TOMBOL LENCANA / PIALA GAMIFIKASI DI SEBELAH TITIK TIGA -->
+            <div class="flex items-center space-x-2">
+                <!-- TOMBOL GAMIFIKASI & BADGES -->
                 <button onclick="openModalBadges()" type="button" title="Pencapaian & Lencana" class="w-10 h-10 rounded-full flex items-center justify-center text-amber-500 hover:text-amber-600 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 transition active:scale-95 shadow-sm relative">
                     <i class="fa-solid fa-trophy text-base"></i>
                     <span id="badgeCountIndicator" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border border-white dark:border-[#0d0d0f] hidden">0</span>
                 </button>
 
+                <!-- TEMA TOGGLE SHORTCUT -->
+                <button onclick="cycleTheme()" type="button" title="Ubah Tema" class="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 transition active:scale-95">
+                    <i id="themeIcon" class="fa-solid fa-desktop text-sm"></i>
+                </button>
+
+                <!-- MENU DROPDOWN -->
                 <div class="relative">
-                    <!-- TOMBOL TITIK TIGA BULAT -->
-                    <button onclick="toggleTopMenu()" type="button" class="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-[#1a1a24] border border-gray-300 dark:border-gray-800 transition active:scale-95 shadow-sm">
+                    <button onclick="toggleTopMenu()" type="button" class="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800 transition active:scale-95">
                         <i class="fa-solid fa-ellipsis-vertical text-base"></i>
                     </button>
 
-                    <!-- Top Dropdown Menu -->
-                    <div id="topMenu" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 rounded-2xl shadow-2xl z-40 py-2 text-xs text-gray-800 dark:text-gray-200">
-                        
-                        <!-- KETERANGAN PROFILE USERNAME -->
-                        <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-theme-light text-theme-accent flex items-center justify-center text-xs font-bold">
-                                <i class="fa-solid fa-user"></i>
+                    <div id="topMenu" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-[#1a1a24] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl py-2 z-50 text-xs font-medium divide-y divide-gray-100 dark:divide-gray-800/60">
+                        <div class="py-1">
+                            <button id="menuLoginBtn" onclick="openModalUsername()" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222230] text-blue-600 dark:text-blue-400 font-semibold flex items-center space-x-2.5">
+                                <i class="fa-solid fa-right-to-bracket w-4 text-center"></i>
+                                <span>Masuk / Daftar Akun</span>
+                            </button>
+                            <button id="menuChangePassBtn" onclick="openModalChangePassword()" class="hidden w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222230] text-gray-700 dark:text-gray-200 flex items-center space-x-2.5">
+                                <i class="fa-solid fa-key w-4 text-center text-amber-500"></i>
+                                <span>Ganti Kata Sandi & Akun</span>
+                            </button>
+                        </div>
+
+                        <!-- PENGATURAN TAMPILAN -->
+                        <div class="py-2 px-4 space-y-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Pilihan Font</span>
+                            <div class="flex items-center space-x-1 bg-gray-100 dark:bg-[#12121a] p-1 rounded-xl">
+                                <button id="btnFontSans" onclick="changeFont('sans')" class="flex-1 py-1 rounded-lg text-[10px] font-medium font-sans">Sans</button>
+                                <button id="btnFontSerif" onclick="changeFont('serif')" class="flex-1 py-1 rounded-lg text-[10px] font-medium font-serif">Serif</button>
+                                <button id="btnFontMono" onclick="changeFont('mono')" class="flex-1 py-1 rounded-lg text-[10px] font-medium font-mono">Mono</button>
                             </div>
-                            <div class="truncate">
-                                <p class="text-[10px] text-gray-400 font-medium">Status Akun</p>
-                                <p id="currentUsernameLabel" class="font-bold text-theme-accent truncate">@Guest (Tamu)</p>
+
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block pt-1">Warna Akses</span>
+                            <div class="flex items-center justify-between pt-0.5">
+                                <button id="btnColorBlue" onclick="changeAccentColor('blue')" class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center transition active:scale-95"></button>
+                                <button id="btnColorRed" onclick="changeAccentColor('red')" class="w-6 h-6 rounded-full bg-rose-500 flex items-center justify-center transition active:scale-95"></button>
+                                <button id="btnColorYellow" onclick="changeAccentColor('yellow')" class="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center transition active:scale-95"></button>
+                                <button id="btnColorGreen" onclick="changeAccentColor('green')" class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center transition active:scale-95"></button>
                             </div>
                         </div>
 
-                        <!-- TOMBOL MASUK / DAFTAR -->
-                        <button id="menuLoginBtn" onclick="openModalUsername()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-theme-accent font-semibold flex items-center gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
-                            <i class="fa-solid fa-right-to-bracket"></i> Masuk / Daftar Akun
-                        </button>
-
-                        <!-- TOMBOL GANTI KATA SANDI -->
-                        <button id="menuChangePassBtn" onclick="openModalChangePassword()" class="hidden w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-theme-accent font-semibold flex items-center gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
-                            <i class="fa-solid fa-key"></i> Ganti Kata Sandi
-                        </button>
-
-                        <!-- PENGATURAN WARNA TEMA -->
-                        <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700/50">
-                            <p class="text-[10px] text-gray-400 font-medium mb-1.5">Warna Akses Tema</p>
-                            <div class="flex items-center gap-2">
-                                <button id="btnColorBlue" onclick="changeAccentColor('blue')" class="w-6 h-6 rounded-full bg-blue-500 hover:scale-110 active:scale-95 transition flex items-center justify-center" title="Biru"></button>
-                                <button id="btnColorRed" onclick="changeAccentColor('red')" class="w-6 h-6 rounded-full bg-rose-500 hover:scale-110 active:scale-95 transition flex items-center justify-center" title="Merah"></button>
-                                <button id="btnColorYellow" onclick="changeAccentColor('yellow')" class="w-6 h-6 rounded-full bg-amber-500 hover:scale-110 active:scale-95 transition flex items-center justify-center" title="Kuning"></button>
-                                <button id="btnColorGreen" onclick="changeAccentColor('green')" class="w-6 h-6 rounded-full bg-emerald-500 hover:scale-110 active:scale-95 transition flex items-center justify-center" title="Hijau"></button>
-                            </div>
+                        <div class="py-1">
+                            <button onclick="confirmResetSampleData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222230] text-gray-700 dark:text-gray-300 flex items-center space-x-2.5">
+                                <i class="fa-solid fa-rotate w-4 text-center text-gray-400"></i>
+                                <span>Muat Data Contoh</span>
+                            </button>
+                            <button onclick="confirmClearAllData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222230] text-rose-500 flex items-center space-x-2.5">
+                                <i class="fa-solid fa-trash-can w-4 text-center"></i>
+                                <span>Hapus Semua Data</span>
+                            </button>
+                            <button id="menuLogoutBtn" onclick="handleLogout()" class="hidden w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222230] text-rose-500 font-semibold flex items-center space-x-2.5">
+                                <i class="fa-solid fa-right-from-bracket w-4 text-center"></i>
+                                <span>Keluar Akun</span>
+                            </button>
                         </div>
-
-                        <!-- PENGATURAN FONT -->
-                        <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700/50">
-                            <p class="text-[10px] text-gray-400 font-medium mb-1.5">Gaya Font</p>
-                            <div class="flex items-center gap-1 bg-gray-100 dark:bg-[#14141c] p-1 rounded-xl">
-                                <button id="btnFontSans" onclick="changeFont('sans')" class="flex-1 py-1 rounded-lg text-[10px] font-sans font-medium transition">Sans</button>
-                                <button id="btnFontSerif" onclick="changeFont('serif')" class="flex-1 py-1 rounded-lg text-[10px] font-serif font-medium transition">Serif</button>
-                                <button id="btnFontMono" onclick="changeFont('mono')" class="flex-1 py-1 rounded-lg text-[10px] font-mono font-medium transition">Mono</button>
-                            </div>
-                        </div>
-
-                        <!-- Menu Pengaturan Tema Gelap/Terang -->
-                        <button onclick="cycleTheme()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282838] flex items-center justify-between gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
-                            <div class="flex items-center gap-2.5">
-                                <i id="menuThemeIcon" class="fa-solid fa-circle-half-stroke text-theme-accent text-sm"></i>
-                                <span class="font-medium">Mode Tampilan</span>
-                            </div>
-                            <span id="menuThemeLabel" class="text-[10px] font-semibold bg-theme-light text-theme-accent px-2 py-0.5 rounded-md border border-theme-accent">Sistem</span>
-                        </button>
-
-                        <!-- Menu Reset Data Contoh -->
-                        <button onclick="confirmResetSampleData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282838] flex items-center gap-2.5 transition">
-                            <i class="fa-solid fa-rotate-left text-theme-accent"></i> Reset Data Contoh
-                        </button>
-
-                        <!-- Menu Hapus Semua Data -->
-                        <button onclick="confirmClearAllData()" class="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#282838] text-rose-500 dark:text-rose-400 flex items-center gap-2.5 transition border-b border-gray-100 dark:border-gray-700/50">
-                            <i class="fa-solid fa-trash-can"></i> Hapus Semua Data
-                        </button>
-
-                        <!-- TOMBOL LOGOUT -->
-                        <button id="menuLogoutBtn" onclick="handleLogout()" class="hidden w-full text-left px-4 py-2.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-500 font-medium flex items-center gap-2.5 transition">
-                            <i class="fa-solid fa-right-from-bracket"></i> Keluar (Logout)
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Container Shell -->
-    <main class="flex-1 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
-        
-        <!-- BANNER INFORMASI MODE GUEST (TAMU) -->
-        <div id="guestNoticeBanner" class="mb-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0 text-base">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-                <div>
-                    <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200">Kamu Menggunakan Mode Guest (Tamu)</h4>
-                    <p class="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">Data tersimpan lokal di peramban ini. Masuk atau daftar akun agar data tersimpan di Cloud!</p>
-                </div>
-            </div>
-            <button onclick="openModalUsername()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-xs shadow-md transition active:scale-95 flex-shrink-0">
-                Masuk / Daftar
-            </button>
-        </div>
+    <!-- NOTIFIKASI MODE GUEST -->
+    <div id="guestNoticeBanner" class="bg-amber-500/10 border-b border-amber-500/20 py-2 px-4 text-center text-amber-600 dark:text-amber-400 text-xs font-medium flex items-center justify-center space-x-2">
+        <i class="fa-solid fa-circle-info text-xs"></i>
+        <span>Kamu dalam Mode Tamu. Login untuk menyinkronkan data di cloud!</span>
+        <button onclick="openModalUsername()" class="underline font-bold ml-1 hover:text-amber-700">Login Sekarang</button>
+    </div>
 
-        <!-- VIEW 1: HOME PAGE -->
-        <div id="view-home" class="flex-1 flex flex-col space-y-6 animate-fade-in">
-            <div class="bg-white dark:bg-[#15151e] border border-gray-200 dark:border-gray-800/80 rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
-                <div class="flex bg-gray-100 dark:bg-[#1d1d28] p-1 rounded-xl border border-gray-200 dark:border-gray-800/80 w-full md:w-auto">
-                    <button onclick="setActiveTab('berlangsung')" id="tab-berlangsung" class="flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-theme-accent bg-white dark:bg-[#282838] shadow transition">Berlangsung</button>
-                    <button onclick="setActiveTab('tercapai')" id="tab-tercapai" class="flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">Tercapai</button>
-                </div>
-                <div class="flex items-center gap-2.5 w-full md:w-auto">
-                    <div class="relative flex-1 md:w-48">
-                        <button onclick="toggleSortDropdown()" class="w-full bg-gray-50 dark:bg-[#1c1c26] border border-gray-300 dark:border-gray-700/80 hover:border-gray-400 dark:hover:border-gray-600 rounded-xl px-3.5 py-2 text-xs font-medium text-gray-800 dark:text-gray-200 flex items-center justify-between transition">
-                            <div class="flex items-center gap-2 truncate">
-                                <i class="fa-solid fa-bars-staggered text-theme-accent"></i>
-                                <span id="currentSortLabel">Nama Tabungan</span>
-                            </div>
-                            <i class="fa-solid fa-chevron-down text-gray-400 text-[10px]"></i>
-                        </button>
-                        <div id="sortDropdown" class="hidden absolute left-0 right-0 mt-1 bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 rounded-xl shadow-2xl z-30 py-1 text-xs text-gray-800 dark:text-gray-200">
-                            <button onclick="setSortField('nama', 'Nama Tabungan')" class="w-full text-left px-3.5 py-2 hover:bg-gray-100 dark:hover:bg-[#282838]">Nama Tabungan</button>
-                            <button onclick="setSortField('persen', 'Persentase')" class="w-full text-left px-3.5 py-2 hover:bg-gray-100 dark:hover:bg-[#282838]">Persentase</button>
-                            <button onclick="setSortField('target', 'Nilai Target')" class="w-full text-left px-3.5 py-2 hover:bg-gray-100 dark:hover:bg-[#282838]">Nilai Target</button>
-                            <button onclick="setSortField('terkumpul', 'Terkumpul')" class="w-full text-left px-3.5 py-2 hover:bg-gray-100 dark:hover:bg-[#282838]">Terkumpul</button>
-                        </div>
-                    </div>
-                    <button onclick="toggleSortOrder()" id="btnSortOrder" class="bg-gray-50 dark:bg-[#1c1c26] border border-gray-300 dark:border-gray-700/80 hover:border-gray-400 dark:hover:border-gray-600 rounded-xl px-3.5 py-2 text-xs font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2 transition flex-shrink-0">
-                        <i id="sortOrderIcon" class="fa-solid fa-arrow-up text-theme-accent"></i>
-                        <span id="sortOrderLabel" class="hidden sm:inline">Meningkat</span>
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-xl mx-auto px-4 pt-5">
+
+        <!-- VIEW 1: DASHBOARD UTAMA -->
+        <div id="view-home" class="space-y-5">
+            
+            <!-- CONTROL TABS & SORTING -->
+            <div class="flex items-center justify-between gap-2 bg-gray-200/60 dark:bg-[#161620] p-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-800/80">
+                <div class="flex items-center space-x-1 flex-1">
+                    <button id="tab-berlangsung" onclick="setActiveTab('berlangsung')" class="flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-[#282838] shadow transition">
+                        Berlangsung
+                    </button>
+                    <button id="tab-tercapai" onclick="setActiveTab('tercapai')" class="flex-1 md:flex-initial px-6 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">
+                        Tercapai
                     </button>
                 </div>
-            </div>
 
-            <div id="savingsListContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-
-            <div id="emptyState" class="hidden flex-1 flex flex-col items-center justify-center p-12 text-center my-auto min-h-[350px]">
-                <div class="w-20 h-20 rounded-3xl bg-gray-200 dark:bg-[#1a1a24] border border-gray-300 dark:border-gray-800 flex items-center justify-center text-gray-500 mb-4 text-3xl">
-                    <i class="fa-solid fa-piggy-bank"></i>
-                </div>
-                <h3 class="text-base font-bold text-gray-800 dark:text-gray-300">Belum Ada Tabungan</h3>
-                <p class="text-xs text-gray-500 mt-1.5 max-w-sm">Tekan tombol '+ Tambah Tabungan' untuk mulai menyisihkan tabungan impianmu.</p>
-                <button onclick="openModalAddSavings()" class="mt-5 bg-theme-accent text-white font-medium px-5 py-2.5 rounded-xl text-xs shadow-lg transition">+ Tambah Celengan Baru</button>
-            </div>
-        </div>
-
-        <!-- VIEW 2: DETAIL PAGE -->
-        <div id="view-detail" class="hidden flex-1 flex flex-col space-y-6 animate-fade-in">
-            <div class="bg-white dark:bg-[#15151e] border border-gray-200 dark:border-gray-800/80 rounded-2xl p-4 flex items-center justify-between shadow-xl">
-                <div class="flex items-center gap-3">
-                    <button onclick="showView('home')" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 p-2 rounded-xl transition">
-                        <i class="fa-solid fa-chevron-left text-base"></i>
-                    </button>
-                    <div>
-                        <span class="text-[10px] text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Detail Tabungan</span>
-                        <h2 id="detailHeaderTitle" class="text-lg font-bold text-gray-900 dark:text-white truncate max-w-[150px] sm:max-w-md">Detail Tabungan</h2>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="exportToPDF()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 text-rose-500 dark:text-rose-400 hover:border-rose-500/50 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition active:scale-95" title="Ekspor PDF">
-                        <i class="fa-solid fa-file-pdf text-sm"></i><span class="hidden sm:inline">Ekspor PDF</span>
-                    </button>
-                    <button onclick="openModalEditSavings()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 text-theme-accent px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition active:scale-95">
-                        <i class="fa-solid fa-pencil"></i><span class="hidden sm:inline">Edit</span>
-                    </button>
-                    <button onclick="confirmDeleteSavings()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 hover:border-rose-500/50 text-rose-600 dark:text-rose-400 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition active:scale-95">
-                        <i class="fa-solid fa-trash-can"></i><span class="hidden sm:inline">Hapus</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div class="lg:col-span-7 space-y-6">
-                    <div class="w-full h-60 sm:h-72 rounded-3xl overflow-hidden bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 flex items-center justify-center relative shadow-lg">
-                        <img id="detailImg" src="" alt="Product" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/22222a/94a3b8?text=Impian+Kamu';">
-                    </div>
-                    <div class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 rounded-3xl p-6 shadow-xl">
-                        <div class="flex items-center justify-between gap-4">
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Target Tabungan</p>
-                                <h3 id="detailTargetAmount" class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mt-0.5">Rp 0</h3>
-                                <p id="detailFrequency" class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">Rp 0 Perminggu</p>
-                            </div>
-                            <div class="relative w-20 h-20 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-20 h-20 transform -rotate-90">
-                                    <circle cx="40" cy="40" r="32" class="stroke-gray-200 dark:stroke-[#282836]" stroke-width="6" fill="transparent" />
-                                    <circle id="detailCircleProgress" cx="40" cy="40" r="32" stroke="var(--accent-color)" stroke-width="6" stroke-dasharray="201.06" stroke-dashoffset="201.06" stroke-linecap="round" fill="transparent" class="transition-all duration-700 ease-out" />
-                                </svg>
-                                <span id="detailPercentText" class="absolute text-sm font-bold text-gray-900 dark:text-white">0%</span>
-                            </div>
-                        </div>
-                        <div class="border-t border-gray-100 dark:border-gray-800/80 mt-5 pt-4 grid grid-cols-2 gap-4 text-xs">
-                            <div>
-                                <p class="text-gray-500 dark:text-gray-400">Tanggal Dibuat</p>
-                                <p id="detailCreatedDate" class="text-gray-800 dark:text-gray-200 font-semibold mt-0.5">-</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-gray-500 dark:text-gray-400">Estimasi Kebutuhan</p>
-                                <p id="detailEstimasi" class="text-theme-accent font-semibold mt-0.5">-</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 rounded-3xl p-6 shadow-xl grid grid-cols-2 gap-4">
-                        <div class="text-center border-r border-gray-100 dark:border-gray-800/80 pr-2">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Terkumpul</p>
-                            <p id="detailTerkumpul" class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">Rp 0</p>
-                        </div>
-                        <div class="text-center pl-2">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Kekurangan</p>
-                            <p id="detailKekurangan" class="text-lg sm:text-xl font-bold text-rose-600 dark:text-rose-400">Rp 0</p>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 rounded-2xl p-4 flex items-center justify-between cursor-pointer transition shadow-lg" onclick="openModalReminder()">
-                        <div class="flex items-center gap-3.5">
-                            <div class="w-11 h-11 rounded-2xl bg-theme-light border border-theme-accent flex items-center justify-center text-theme-accent">
-                                <i class="fa-solid fa-bell text-lg text-theme-accent"></i>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <p id="detailReminderTime" class="text-base font-bold text-gray-900 dark:text-white">12:00</p>
-                                    <i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i>
-                                </div>
-                                <p id="detailReminderFreq" class="text-xs text-gray-500 dark:text-gray-400">Setiap Minggu</p>
-                            </div>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
-                            <input type="checkbox" id="toggleReminder" onchange="toggleReminderState(this.checked)" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-accent"></div>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
-                    <div class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800/80 rounded-3xl p-6 shadow-xl space-y-4">
-                        <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800/80 pb-3">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-receipt text-theme-accent"></i>
-                                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Riwayat Tabungan</h3>
-                            </div>
-                            <span id="detailHistoryCount" class="text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#22222e] px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-800">0 Transaksi</span>
-                        </div>
-                        <button onclick="openModalTransaction()" class="w-full bg-theme-accent hover:opacity-90 text-white font-semibold py-3 px-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs transition active:scale-95">
-                            <i class="fa-solid fa-plus-minus text-white"></i>
-                            <span class="text-white">Catat Tabungan Baru</span>
-                        </button>
-                        <div id="detailHistoryContainer" class="space-y-2.5 max-h-[450px] overflow-y-auto pr-1"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- MODAL 1: ADD / EDIT CELENGAN -->
-    <div id="modalSavings" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-md rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 max-h-[90vh] overflow-y-auto no-scrollbar">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700/60 mb-4">
-                <h3 id="modalSavingsTitle" class="text-base font-bold text-gray-900 dark:text-white">Tambah Tabungan</h3>
-                <button type="button" onclick="closeModalSavings()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            <form id="formSavings" onsubmit="handleSaveSavings(event)" class="space-y-4 text-xs">
-                <input type="hidden" id="inputSavingsId">
+                <!-- DROPDOWN PENGURUTAN (SORTING) -->
                 <div class="relative">
-                    <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3">
-                        <i class="fa-solid fa-bars text-gray-400 mr-2.5 text-sm"></i>
-                        <input type="text" id="inputTitle" placeholder="Nama Tabungan" required class="w-full bg-transparent text-gray-900 dark:text-white text-xs focus:outline-none">
-                    </div>
-                </div>
-                <div class="relative">
-                    <label class="absolute -top-2 left-3 bg-white dark:bg-[#1c1c26] px-1 text-[10px] text-theme-accent font-semibold z-10">Target Tabungan</label>
-                    <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-theme-accent rounded-xl px-3.5 py-3 mt-1 relative">
-                        <i class="fa-solid fa-money-bill-wave text-gray-400 mr-2.5 text-sm"></i>
-                        <input type="text" id="inputTargetAmount" inputmode="numeric" placeholder="50.000" oninput="handleFormattedInput(this)" required class="w-full bg-transparent text-gray-900 dark:text-white font-bold text-sm focus:outline-none pr-6">
-                        <button type="button" onclick="clearInput('inputTargetAmount')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 absolute right-3">
-                            <i class="fa-solid fa-circle-xmark text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="relative">
-                    <label class="absolute -top-2 left-3 bg-white dark:bg-[#1c1c26] px-1 text-[10px] text-gray-500 dark:text-gray-400 font-medium z-10">Mata Uang</label>
-                    <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3 mt-1">
-                        <span id="currencyFlag" class="mr-2 text-base">🇮🇩</span>
-                        <select id="inputCurrency" onchange="handleCurrencyChange(this.value)" class="w-full bg-transparent text-gray-900 dark:text-white font-medium text-xs focus:outline-none cursor-pointer">
-                            <option value="IDR|Rp|🇮🇩" class="dark:bg-[#1c1c26]">Indonesia Rupiah ( Rp )</option>
-                            <option value="USD|$|🇺🇸" class="dark:bg-[#1c1c26]">US Dollar ( $ )</option>
-                            <option value="EUR|€|🇪🇺" class="dark:bg-[#1c1c26]">Euro ( € )</option>
-                            <option value="JPY|¥|🇯🇵" class="dark:bg-[#1c1c26]">Japanese Yen ( ¥ )</option>
-                            <option value="SGD|S$|🇸🇬" class="dark:bg-[#1c1c26]">Singapore Dollar ( S$ )</option>
-                            <option value="MYR|RM|🇲🇾" class="dark:bg-[#1c1c26]">Ringgit Malaysia ( RM )</option>
-                            <option value="KRW|₩|🇰🇷" class="dark:bg-[#1c1c26]">Korean Won ( ₩ )</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-gray-600 dark:text-gray-400 font-medium mb-1.5">Rencana Pengisian</label>
-                    <div class="bg-gray-100 dark:bg-[#14141c] p-1 rounded-xl flex border border-gray-200 dark:border-gray-700/80 mb-2">
-                        <button type="button" id="btnFreqHarian" onclick="setFreqType('Perhari')" class="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 transition">Harian</button>
-                        <button type="button" id="btnFreqMingguan" onclick="setFreqType('Perminggu')" class="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#2a2a38] text-theme-accent shadow transition">Mingguan</button>
-                        <button type="button" id="btnFreqBulanan" onclick="setFreqType('Perbulan')" class="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 transition">Bulanan</button>
-                    </div>
-                    <input type="hidden" id="inputFreqType" value="Perminggu">
-                    <div class="relative">
-                        <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3 relative">
-                            <i class="fa-solid fa-calculator text-gray-400 mr-2.5 text-sm"></i>
-                            <input type="text" id="inputFreqAmount" inputmode="numeric" placeholder="Nominal Pengisian" oninput="handleFormattedInput(this)" required class="w-full bg-transparent text-gray-900 dark:text-white font-medium text-xs focus:outline-none pr-6">
-                            <button type="button" onclick="clearInput('inputFreqAmount')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 absolute right-3">
-                                <i class="fa-solid fa-circle-xmark text-sm"></i>
+                    <button onclick="toggleSortDropdown()" type="button" class="px-3 py-2 rounded-xl bg-white dark:bg-[#222230] border border-gray-200 dark:border-gray-800 text-xs font-semibold flex items-center space-x-1.5 text-gray-700 dark:text-gray-300 shadow-sm active:scale-95 transition">
+                        <i class="fa-solid fa-arrow-down-short-wide text-gray-400"></i>
+                        <span id="currentSortLabel">Nama</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+                    </button>
+
+                    <div id="sortDropdown" class="hidden absolute right-0 mt-2 w-44 bg-white dark:bg-[#1c1c28] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl py-1.5 z-40 text-xs divide-y divide-gray-100 dark:divide-gray-800">
+                        <div class="py-1">
+                            <button onclick="setSortField('nama', 'Nama')" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#252536] text-gray-700 dark:text-gray-300">Berdasarkan Nama</button>
+                            <button onclick="setSortField('persen', 'Persentase')" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#252536] text-gray-700 dark:text-gray-300">Berdasarkan Capaian (%)</button>
+                            <button onclick="setSortField('target', 'Target Uang')" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#252536] text-gray-700 dark:text-gray-300">Berdasarkan Target Nominal</button>
+                            <button onclick="setSortField('terkumpul', 'Terkumpul')" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#252536] text-gray-700 dark:text-gray-300">Berdasarkan Terkumpul</button>
+                        </div>
+                        <div class="py-1">
+                            <button onclick="toggleSortOrder()" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#252536] text-blue-500 font-semibold flex items-center justify-between">
+                                <span id="sortOrderLabel">Meningkat</span>
+                                <i id="sortOrderIcon" class="fa-solid fa-arrow-up text-blue-500"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700/60">
-                    <label class="block text-gray-800 dark:text-gray-300 font-semibold">Foto Sampul Impian</label>
-                    <div class="relative w-full h-36 rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700/80 flex items-center justify-center">
-                        <img id="modalImgPreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
-                        <div id="modalImgPlaceholder" class="flex flex-col items-center justify-center text-gray-500 p-3 text-center">
-                            <i class="fa-solid fa-image text-2xl mb-1 text-gray-400"></i>
-                            <span class="text-[11px]">Upload foto dari HP / PC / masukkan URL</span>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="text-gray-500 dark:text-gray-400 font-medium">Upload dari Galeri</label>
-                            <span class="text-[10px] text-amber-500 font-semibold">Maks. 1 MB</span>
-                        </div>
-                        <input type="file" id="inputFileImage" accept="image/*" onchange="handleFileSelect(event)" class="w-full bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3 py-1.5 text-gray-700 dark:text-gray-300 text-xs file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-theme-accent file:text-white cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="block text-gray-500 dark:text-gray-400 font-medium mb-1">Atau Gunakan URL Gambar Web</label>
-                        <input type="url" id="inputImage" placeholder="https://..." oninput="updateLivePreview(this.value)" class="w-full bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-gray-900 dark:text-white text-xs focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-gray-500 dark:text-gray-400 font-medium mb-1">Atau Pilih Preset Gambar</label>
-                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                            <button type="button" onclick="setPresetImg('mac')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">Laptop/Mac</button>
-                            <button type="button" onclick="setPresetImg('iphone')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">iPhone</button>
-                            <button type="button" onclick="setPresetImg('motor')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">Motor</button>
-                            <button type="button" onclick="setPresetImg('sepatu')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">Sepatu</button>
-                            <button type="button" onclick="setPresetImg('konser')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">Konser</button>
-                            <button type="button" onclick="setPresetImg('mobil')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">Mobil</button>
-                            <button type="button" onclick="setPresetImg('rumah')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">Rumah</button>
-                            <button type="button" onclick="setPresetImg('kamera')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">Kamera</button>
-                            <button type="button" onclick="setPresetImg('liburan')" class="px-2.5 py-1 bg-gray-200 dark:bg-[#282836] text-gray-800 dark:text-gray-200 rounded-lg text-[10px] flex-shrink-0 transition">Liburan</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="pt-3 flex justify-end gap-2">
-                    <button type="button" onclick="closeModalSavings()" class="px-4 py-2.5 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium rounded-xl">Batal</button>
-                    <button type="submit" class="px-6 py-2.5 bg-theme-accent text-white font-medium rounded-xl shadow-md">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 2: CATAT TABUNGAN -->
-    <div id="modalTransaction" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200">
-            <h3 id="modalTxTitle" class="text-center font-bold text-base text-gray-900 dark:text-white mb-4">Catat Tabungan</h3>
-            <div class="bg-gray-100 dark:bg-[#14141c] p-1 rounded-2xl flex border border-gray-200 dark:border-gray-700/60 mb-4">
-                <button type="button" id="btnTypeDeposit" onclick="setTransactionType('deposit')" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white shadow transition">+ Tambah</button>
-                <button type="button" id="btnTypeWithdraw" onclick="setTransactionType('withdraw')" class="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition">– Kurangi</button>
             </div>
-            <form id="formTransaction" onsubmit="handleSaveTransaction(event)" class="space-y-4 text-xs">
-                <div class="relative">
-                    <label class="absolute -top-2 left-3 bg-white dark:bg-[#1c1c26] px-1 text-[10px] text-theme-accent font-semibold z-10">Nominal</label>
-                    <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-theme-accent rounded-xl px-3.5 py-3 mt-1 relative">
-                        <i class="fa-solid fa-money-bill-wave text-gray-400 mr-2.5 text-sm"></i>
-                        <input type="text" id="inputTxAmount" inputmode="numeric" placeholder="0" oninput="handleFormattedInput(this)" required class="w-full bg-transparent text-gray-900 dark:text-white font-bold text-sm focus:outline-none pr-6">
-                        <button type="button" onclick="clearInput('inputTxAmount')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 absolute right-3">
-                            <i class="fa-solid fa-circle-xmark text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                    <button type="button" onclick="setTxChipAmount(50000)" class="px-3 py-1.5 bg-gray-100 dark:bg-[#282836] hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 flex-shrink-0">50.000</button>
-                    <button type="button" id="chipPeriodic" onclick="setTxChipAmount(0)" class="px-3 py-1.5 bg-gray-100 dark:bg-[#282836] hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 flex-shrink-0">Target Periode</button>
-                    <button type="button" id="chipRemaining" onclick="setTxChipAmount(0)" class="px-3 py-1.5 bg-gray-100 dark:bg-[#282836] hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 flex-shrink-0">Sisa Kekurangan</button>
-                </div>
-                <div class="relative">
-                    <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3">
-                        <i class="fa-solid fa-equals text-gray-400 mr-2.5 text-sm"></i>
-                        <input type="text" id="inputTxNote" placeholder="Keterangan (opsional)" class="w-full bg-transparent text-gray-900 dark:text-white text-xs focus:outline-none">
-                    </div>
-                </div>
-                <div class="pt-3 flex items-center justify-between">
-                    <button type="button" onclick="closeModalTransaction()" class="px-5 py-2.5 text-theme-accent hover:underline font-semibold text-xs">Batal</button>
-                    <button type="submit" class="px-6 py-2.5 bg-theme-accent text-white font-semibold rounded-2xl shadow-md text-xs">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- MODAL 3: TRANSACTION DETAIL POPUP -->
-    <div id="modalTxDetail" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 relative">
-            <button type="button" onclick="closeModalTxDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-            <div class="text-center pt-2 pb-1">
-                <h2 id="txDetailAmount" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">+ 2.200.000</h2>
-                <p id="txDetailDate" class="text-xs text-gray-500 dark:text-gray-400 mt-2">18 Okt 2026 • 12:03</p>
-                <p id="txDetailNote" class="text-xs text-gray-700 dark:text-gray-300 mt-1 italic hidden"></p>
+            <!-- CONTAINER LIST CELENGAN -->
+            <div id="savingsListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Diisi secara dinamis oleh script.js -->
             </div>
-            <div class="grid grid-cols-2 gap-3 mt-6">
-                <button type="button" onclick="handleEditTxFromModal()" class="py-2.5 px-3 bg-theme-light text-theme-accent border border-theme-accent rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
-                    <i class="fa-solid fa-pencil text-sm"></i><span>Ubah</span>
-                </button>
-                <button type="button" onclick="handleDeleteTxFromModal()" class="py-2.5 px-3 bg-rose-50 dark:bg-[#38222a] text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/40 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
-                    <i class="fa-solid fa-trash-can text-sm"></i><span>Hapus</span>
+
+            <!-- EMPTY STATE -->
+            <div id="emptyState" class="hidden text-center py-16 px-4">
+                <div class="w-20 h-20 bg-gray-100 dark:bg-[#181824] rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400 dark:text-gray-600">
+                    <i class="fa-solid fa-piggy-bank text-3xl"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-800 dark:text-gray-200">Belum Ada Celengan</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">Mulai wujudkan barang atau target impianmu dengan menabung secara rutin hari ini.</p>
+                <button onclick="openModalAddSavings()" class="mt-5 px-5 py-2.5 bg-theme-accent hover:bg-theme-accent-hover text-white rounded-2xl text-xs font-semibold shadow-lg transition active:scale-95">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Buat Celengan Baru
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- MODAL 4: CONFIRM DELETE CELENGAN -->
-    <div id="modalConfirmDelete" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-in text-center text-gray-800 dark:text-gray-200">
-            <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-3 text-xl">
-                <i class="fa-solid fa-trash-can"></i>
+        <!-- VIEW 2: DETAIL CELENGAN -->
+        <div id="view-detail" class="hidden space-y-5">
+            <!-- DETAIL HEADER BAR -->
+            <div class="flex items-center justify-between">
+                <button onclick="showView('home')" type="button" class="w-10 h-10 rounded-2xl bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 shadow-sm active:scale-95 transition">
+                    <i class="fa-solid fa-arrow-left text-sm"></i>
+                </button>
+                <h2 id="detailHeaderTitle" class="font-bold text-base text-gray-900 dark:text-white truncate max-w-[200px]">Detail Target</h2>
+                <div class="flex items-center space-x-1.5">
+                    <button onclick="exportToPDF()" type="button" title="Cetak PDF" class="w-10 h-10 rounded-2xl bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-rose-500 shadow-sm active:scale-95 transition">
+                        <i class="fa-solid fa-file-pdf text-sm"></i>
+                    </button>
+                    <button onclick="openModalEditSavings()" type="button" title="Edit Celengan" class="w-10 h-10 rounded-2xl bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-amber-500 shadow-sm active:scale-95 transition">
+                        <i class="fa-solid fa-pen-to-square text-sm"></i>
+                    </button>
+                    <button onclick="confirmDeleteSavings()" type="button" title="Hapus Celengan" class="w-10 h-10 rounded-2xl bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-rose-500 shadow-sm active:scale-95 transition">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                </div>
             </div>
-            <h3 class="font-bold text-gray-900 dark:text-white text-sm mb-1">Hapus Celengan?</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-5">Apakah Anda yakin ingin menghapus celengan ini? Semua riwayat transaksi akan hilang.</p>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="closeConfirmDelete()" class="flex-1 py-2.5 bg-gray-100 dark:bg-[#282836] hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold">Batal</button>
-                <button type="button" onclick="executeDeleteSavings()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-md">Hapus</button>
+
+            <!-- HERO BANNER CARD -->
+            <div class="relative bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800 rounded-3xl p-5 shadow-xl overflow-hidden space-y-4">
+                <div class="w-full h-48 rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#22222e] relative">
+                    <img id="detailImg" src="" alt="Target Image" class="w-full h-full object-cover">
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Target Impian</span>
+                        <h3 id="detailTargetAmount" class="text-2xl font-extrabold text-gray-900 dark:text-white">Rp 0</h3>
+                        <p id="detailFrequency" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">Rp 0 / Mingguan</p>
+                    </div>
+
+                    <!-- CIRCULAR PROGRESS -->
+                    <div class="relative w-16 h-16 flex items-center justify-center">
+                        <svg class="w-16 h-16 transform -rotate-90">
+                            <circle cx="32" cy="32" r="28" class="stroke-gray-100 dark:stroke-[#262634]" stroke-width="5" fill="transparent" />
+                            <circle id="detailCircleProgress" cx="32" cy="32" r="28" stroke="currentColor" class="text-theme-accent" stroke-width="5" stroke-dasharray="175.92" stroke-dashoffset="175.92" stroke-linecap="round" fill="transparent" class="transition-all duration-700 ease-out" />
+                        </svg>
+                        <span id="detailPercentText" class="absolute text-xs font-extrabold text-gray-900 dark:text-white">0%</span>
+                    </div>
+                </div>
+
+                <!-- STATS GRID -->
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-gray-800/80">
+                    <div class="bg-gray-50 dark:bg-[#12121a] p-3 rounded-2xl">
+                        <span class="text-[10px] text-gray-400 font-medium block">Terkumpul</span>
+                        <span id="detailTerkumpul" class="text-sm font-bold text-emerald-500">Rp 0</span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-[#12121a] p-3 rounded-2xl">
+                        <span class="text-[10px] text-gray-400 font-medium block">Sisa Kekurangan</span>
+                        <span id="detailKekurangan" class="text-sm font-bold text-rose-500">Rp 0</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-gray-500 pt-1">
+                    <span>Estimasi Sisa Waktu</span>
+                    <span id="detailEstimasi" class="font-bold text-theme-accent">-</span>
+                </div>
+            </div>
+
+            <!-- PENGINGAT (REMINDER) BOX -->
+            <div class="bg-white dark:bg-[#181820] border border-gray-200 dark:border-gray-800 rounded-3xl p-4 shadow-md flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-base">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-900 dark:text-white">Pengingat Menabung</h4>
+                        <p class="text-[10px] text-gray-400"><span id="detailReminderFreq">Setiap Minggu</span> jam <span id="detailReminderTime">12:00</span></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openModalReminder()" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <i class="fa-solid fa-gear text-sm"></i>
+                    </button>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="toggleReminder" type="checkbox" onchange="toggleReminderState(this.checked)" class="sr-only peer">
+                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-theme-accent"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- RIWAYAT TRANSAKSI -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between px-1">
+                    <h3 class="font-bold text-sm text-gray-900 dark:text-white">Riwayat Setoran</h3>
+                    <span id="detailHistoryCount" class="text-xs text-gray-400">0 Transaksi</span>
+                </div>
+
+                <div id="detailHistoryContainer" class="space-y-2">
+                    <!-- Dynamic Rows -->
+                </div>
+            </div>
+
+            <!-- ACTION BUTTON: CATAT TABUNGAN -->
+            <div class="pt-2">
+                <button onclick="openModalTransaction()" type="button" class="w-full py-3.5 bg-theme-accent hover:bg-theme-accent-hover text-white font-bold rounded-2xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-plus-circle text-base"></i>
+                    <span>Catat Tabungan / Penarikan</span>
+                </button>
             </div>
         </div>
-    </div>
 
-    <!-- MODAL 5: CUSTOM PENGINGAT -->
-    <div id="modalReminder" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700/60 mb-4">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-bell text-theme-accent"></i>
-                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Pengaturan Pengingat</h3>
-                </div>
-                <button type="button" onclick="closeModalReminder()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
+    </main>
+
+    <!-- FAB: ADD SAVINGS BUTTON -->
+    <button id="fabAddSavings" onclick="openModalAddSavings()" type="button" class="fixed bottom-6 right-6 w-14 h-14 bg-theme-accent hover:bg-theme-accent-hover text-white rounded-full shadow-2xl shadow-blue-500/40 flex items-center justify-center text-xl transition transform active:scale-90 z-20">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+
+    <!-- ==================== MODALS AREA ==================== -->
+
+    <!-- 1. MODAL CELENGAN (TAMBAH / EDIT + SIMULASI KALKULATOR) -->
+    <div id="modalSavings" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#181824] border border-gray-200 dark:border-gray-800/80 w-full max-w-md rounded-3xl p-6 shadow-2xl my-8 space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                <h3 id="modalSavingsTitle" class="font-bold text-base text-gray-900 dark:text-white">Tambah Celengan</h3>
+                <button onclick="closeModalSavings()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <form id="formReminder" onsubmit="handleSaveReminder(event)" class="space-y-4 text-xs">
+
+            <form onsubmit="handleSaveSavings(event)" class="space-y-4">
+                <input type="hidden" id="inputSavingsId">
+
                 <div>
-                    <label class="block text-gray-600 dark:text-gray-400 font-medium mb-1">Waktu Pengingat (Jam)</label>
-                    <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-gray-900 dark:text-white">
-                        <i class="fa-regular fa-clock text-theme-accent mr-2.5 text-base"></i>
-                        <input type="time" id="inputReminderTime" required class="w-full bg-transparent text-gray-900 dark:text-white font-bold text-base focus:outline-none dark:[color-scheme:dark]">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Nama Target / Impian</label>
+                    <input id="inputTitle" type="text" required placeholder="Misal: Beli Laptop Baru" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Target Uang</label>
+                        <input id="inputTargetAmount" type="text" required placeholder="12.000.000" oninput="handleFormattedInput(this)" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Mata Uang</label>
+                        <select id="inputCurrency" onchange="handleCurrencyChange(this.value)" class="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                            <option value="IDR|Rp|🇮🇩">IDR (Rp) 🇮🇩</option>
+                            <option value="USD|$|🇺🇸">USD ($) 🇺🇸</option>
+                            <option value="EUR|€|🇪🇺">EUR (€) 🇪🇺</option>
+                            <option value="JPY|¥|🇯🇵">JPY (¥) 🇯🇵</option>
+                        </select>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-gray-600 dark:text-gray-400 font-medium mb-1">Frekuensi Hari</label>
-                    <select id="inputReminderFreq" class="w-full bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-gray-900 dark:text-white focus:outline-none">
-                        <option value="Setiap Hari" class="dark:bg-[#1c1c26]">Setiap Hari</option>
-                        <option value="Setiap Minggu" class="dark:bg-[#1c1c26]">Setiap Minggu</option>
-                        <option value="Hari Kerja (Senin - Jumat)" class="dark:bg-[#1c1c26]">Hari Kerja (Senin - Jumat)</option>
-                        <option value="Akhir Pekan (Sabtu - Minggu)" class="dark:bg-[#1c1c26]">Akhir Pekan (Sabtu - Minggu)</option>
-                        <option value="Setiap Bulan" class="dark:bg-[#1c1c26]">Setiap Bulan</option>
-                    </select>
-                </div>
-                <div class="flex items-center justify-between bg-gray-50 dark:bg-[#14141c] p-3.5 rounded-xl border border-gray-200 dark:border-gray-700/60">
-                    <span class="text-gray-700 dark:text-gray-300 font-medium">Aktifkan Pengingat</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="inputReminderActive" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-accent"></div>
-                    </label>
-                </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModalReminder()" class="px-4 py-2.5 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium rounded-xl">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 bg-theme-accent text-white font-medium rounded-xl shadow-md">Simpan Pengingat</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- MODAL 6: LOGIN & REGISTER -->
-    <div id="modalUsername" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 text-center relative">
-            <button type="button" onclick="closeModalUsername()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition z-20 cursor-pointer">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <div class="w-14 h-14 rounded-2xl bg-theme-light border border-theme-accent flex items-center justify-center text-theme-accent mx-auto mb-3 text-2xl">
-                <i class="fa-solid fa-user-lock"></i>
-            </div>
-            <div class="flex bg-gray-100 dark:bg-[#14141c] p-1 rounded-2xl border border-gray-200 dark:border-gray-700/60 mb-5">
-                <button type="button" id="tabAuthLogin" onclick="switchAuthMode('login')" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#282838] text-theme-accent shadow transition">Masuk</button>
-                <button type="button" id="tabAuthRegister" onclick="switchAuthMode('register')" class="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition">Daftar Baru</button>
-            </div>
-            <h3 id="authTitle" class="text-base font-bold text-gray-900 dark:text-white mb-1">Masuk ke TABUNGin</h3>
-            <p id="authSubtitle" class="text-xs text-gray-500 dark:text-gray-400 mb-5">Masukkan username dan kata sandi akunmu.</p>
-            <form onsubmit="handleAuthSubmit(event)" class="space-y-3.5 text-xs">
-                <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3">
-                    <i class="fa-solid fa-at text-gray-400 mr-2.5 text-sm"></i>
-                    <input type="text" id="inputAuthUsername" placeholder="Contoh: milikku3" required class="w-full bg-transparent text-gray-900 dark:text-white font-medium text-xs focus:outline-none">
+                <!-- KALKULATOR TENGGAT WAKTU & SIMULASI -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tenggat Waktu / Deadline (Opsional)</label>
+                    <input id="inputTargetDeadline" type="date" onchange="calculateSavingsTargetSimulation()" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent text-gray-700 dark:text-gray-300">
                 </div>
-                <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3 relative">
-                    <i class="fa-solid fa-key text-gray-400 mr-2.5 text-sm"></i>
-                    <input type="password" id="inputAuthPassword" placeholder="Kata Sandi / Password" required class="w-full bg-transparent text-gray-900 dark:text-white font-medium text-xs focus:outline-none pr-8">
-                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                        <i id="togglePassIcon" class="fa-solid fa-eye text-xs"></i>
+
+                <!-- BOX INFO SIMULASI PERHITUNGAN OTOMATIS -->
+                <div id="calcSimulationInfo" class="hidden text-[11px] text-theme-accent font-medium bg-theme-light p-2.5 rounded-xl border border-theme-accent/30 transition">
+                    <!-- Diisi secara otomatis oleh script.js -->
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Rencana Tabungan</label>
+                        <input id="inputFreqAmount" type="text" required placeholder="50.000" oninput="handleFormattedInput(this)" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Periode Rutin</label>
+                        <input type="hidden" id="inputFreqType" value="Perminggu">
+                        <div class="flex items-center space-x-1 bg-gray-100 dark:bg-[#101016] p-1 rounded-xl">
+                            <button id="btnFreqHarian" type="button" onclick="setFreqType('Perhari')" class="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-500">Hari</button>
+                            <button id="btnFreqMingguan" type="button" onclick="setFreqType('Perminggu')" class="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#2a2a38] text-theme-accent shadow">Minggu</button>
+                            <button id="btnFreqBulanan" type="button" onclick="setFreqType('Perbulan')" class="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-500">Bulan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GAMBAR UPLOAD & PRESET -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Foto Sampul Impian</label>
+                    <input id="inputImage" type="text" placeholder="URL Foto Gambar (https://...)" class="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent" oninput="updateLivePreview(this.value)">
+                    
+                    <div class="flex items-center space-x-2">
+                        <label class="flex-1 cursor-pointer bg-gray-100 dark:bg-[#222230] hover:bg-gray-200 dark:hover:bg-[#2a2a3c] py-2 px-3 rounded-xl border border-gray-200 dark:border-gray-800 text-center text-xs font-medium text-gray-600 dark:text-gray-300 transition">
+                            <i class="fa-solid fa-upload mr-1"></i> Unggah dari HP (Maks 1MB)
+                            <input id="inputFileImage" type="file" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                        </label>
+                    </div>
+
+                    <!-- PRESET IMAGES BADGES -->
+                    <div class="flex items-center space-x-1.5 overflow-x-auto py-1">
+                        <button type="button" onclick="setPresetImg('mac')" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#222230] text-[10px] font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">💻 Laptop</button>
+                        <button type="button" onclick="setPresetImg('iphone')" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#222230] text-[10px] font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">📱 HP</button>
+                        <button type="button" onclick="setPresetImg('motor')" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#222230] text-[10px] font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">🛵 Motor</button>
+                        <button type="button" onclick="setPresetImg('mobil')" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#222230] text-[10px] font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">🚗 Mobil</button>
+                        <button type="button" onclick="setPresetImg('liburan')" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#222230] text-[10px] font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">✈️ Liburan</button>
+                    </div>
+
+                    <!-- PREVIEW BOX -->
+                    <div class="w-full h-28 rounded-2xl bg-gray-100 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 overflow-hidden flex items-center justify-center relative">
+                        <span id="modalImgPlaceholder" class="text-xs text-gray-400">Pratinjau Foto</span>
+                        <img id="modalImgPreview" class="w-full h-full object-cover hidden">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-3 bg-theme-accent hover:bg-theme-accent-hover text-white font-bold rounded-2xl text-xs shadow-lg transition active:scale-95">
+                        Simpan Celengan
                     </button>
                 </div>
-                <button type="submit" id="btnAuthSubmit" class="w-full py-3 bg-theme-accent text-white font-semibold rounded-xl shadow-lg text-xs transition active:scale-95 mt-2">Masuk ke Akun</button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL 7: GANTI KATA SANDI BARU -->
-    <div id="modalChangePassword" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 text-center relative">
-            <button type="button" onclick="closeModalChangePassword()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition z-20 cursor-pointer">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <div class="w-14 h-14 rounded-2xl bg-theme-light border border-theme-accent flex items-center justify-center text-theme-accent mx-auto mb-3 text-2xl">
-                <i class="fa-solid fa-key"></i>
+    <!-- 2. MODAL AUTHENTICATION (LOGIN / REGISTER) -->
+    <div id="modalUsername" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#181824] border border-gray-200 dark:border-gray-800/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 bg-theme-accent/10 text-theme-accent rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <h3 id="authTitle" class="font-bold text-base text-gray-900 dark:text-white">Masuk ke TABUNGin</h3>
+                <p id="authSubtitle" class="text-xs text-gray-500 dark:text-gray-400">Masukkan username dan kata sandi akunmu.</p>
             </div>
-            <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1">Ganti Kata Sandi</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-5">Masukkan kata sandi lama dan kata sandi baru untuk akunmu.</p>
 
-            <form onsubmit="handleChangePasswordSubmit(event)" class="space-y-3.5 text-xs">
-                <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3">
-                    <i class="fa-solid fa-lock text-gray-400 mr-2.5 text-sm"></i>
-                    <input type="password" id="inputOldPassword" placeholder="Kata Sandi Lama" required class="w-full bg-transparent text-gray-900 dark:text-white font-medium text-xs focus:outline-none">
+            <!-- TAB SWITCHER LOGIN / REGISTER -->
+            <div class="flex items-center bg-gray-100 dark:bg-[#12121a] p-1 rounded-2xl">
+                <button id="tabAuthLogin" onclick="switchAuthMode('login')" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#282838] text-blue-600 dark:text-white shadow transition">Masuk</button>
+                <button id="tabAuthRegister" onclick="switchAuthMode('register')" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-gray-800 transition">Daftar Baru</button>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Username Akun</label>
+                    <input id="inputAuthUsername" type="text" required placeholder="Contoh: rehan_99" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
                 </div>
 
-                <div class="flex items-center bg-gray-50 dark:bg-[#14141c] border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-3">
-                    <i class="fa-solid fa-key text-gray-400 mr-2.5 text-sm"></i>
-                    <input type="password" id="inputNewPassword" placeholder="Kata Sandi Baru (min 4 karakter)" required class="w-full bg-transparent text-gray-900 dark:text-white font-medium text-xs focus:outline-none">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kata Sandi</label>
+                    <div class="relative">
+                        <input id="inputAuthPassword" type="password" required placeholder="Min 4 Karakter" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent pr-10">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                            <i id="togglePassIcon" class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModalChangePassword()" class="px-4 py-2.5 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium rounded-xl">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 bg-theme-accent text-white font-medium rounded-xl shadow-md">Simpan Password Baru</button>
+                <div class="pt-2 flex items-center space-x-2">
+                    <button type="button" onclick="closeModalUsername()" class="flex-1 py-2.5 bg-gray-100 dark:bg-[#222230] text-gray-600 dark:text-gray-300 font-semibold rounded-xl text-xs transition">Batal</button>
+                    <button id="btnAuthSubmit" type="submit" class="flex-1 py-2.5 bg-theme-accent hover:bg-theme-accent-hover text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">Masuk ke Akun</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL 8: KOLEKSI LENCANA & GAMIFIKASI -->
-    <div id="modalBadges" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-md rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 relative max-h-[85vh] flex flex-col">
-            <button type="button" onclick="closeModalBadges()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition z-20 cursor-pointer">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <div class="text-center pb-3 border-b border-gray-200 dark:border-gray-700/60 mb-4 flex-shrink-0">
-                <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/40 text-amber-500 border border-amber-300 dark:border-amber-700 flex items-center justify-center mx-auto mb-2 text-xl shadow-md">
-                    <i class="fa-solid fa-trophy"></i>
-                </div>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">Pencapaian & Lencana</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kumpulkan semua piala digital dengan rajin menabung!</p>
+    <!-- 3. MODAL GANTI KATA SANDI & DANGER ZONE (HAPUS AKUN 24 JAM) -->
+    <div id="modalChangePassword" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#181824] border border-gray-200 dark:border-gray-800/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white">Pengaturan Akun</h3>
+                <button onclick="closeModalChangePassword()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
-            
-            <div id="badgesGridContainer" class="grid grid-cols-2 gap-3 overflow-y-auto pr-1 flex-1 no-scrollbar"></div>
+
+            <form onsubmit="handleChangePasswordSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kata Sandi Lama</label>
+                    <input id="inputOldPassword" type="password" required placeholder="Masukkan sandi saat ini" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kata Sandi Baru</label>
+                    <input id="inputNewPassword" type="password" required placeholder="Minimal 4 Karakter" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                </div>
+
+                <div class="pt-1">
+                    <button type="submit" class="w-full py-2.5 bg-theme-accent hover:bg-theme-accent-hover text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95">
+                        Simpan Kata Sandi Baru
+                    </button>
+                </div>
+            </form>
+
+            <!-- DANGER ZONE: HAPUS AKUN PERMANEN -->
+            <div class="pt-3 border-t border-gray-100 dark:border-gray-800/80 space-y-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-rose-500 block">Area Bahaya</span>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">Menghapus akun akan menandai data kamu terhapus. Kamu bisa memulihkannya dalam waktu 24 jam sebelum dihapus permanen.</p>
+
+                <button id="btnDeleteAccount" onclick="handleSoftDeleteAccount()" disabled type="button" class="w-full py-2.5 bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed font-semibold rounded-xl text-xs transition">
+                    Hapus Akun Permanen (20s)
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900 dark:bg-[#1e1e2a] border border-gray-700 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2.5 transition-all duration-300 opacity-0 pointer-events-none">
-        <i id="toastIcon" class="fa-solid fa-circle-check text-theme-accent text-base"></i>
+    <!-- 4. MODAL TRANSAKSI (CATAT SETORAN / PENARIKAN) -->
+    <div id="modalTransaction" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#181824] border border-gray-200 dark:border-gray-800/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                <h3 id="modalTxTitle" class="font-bold text-base text-gray-900 dark:text-white">Catat Tabungan</h3>
+                <button onclick="closeModalTransaction()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleSaveTransaction(event)" class="space-y-3">
+                <!-- TYPE TOGGLE -->
+                <div class="flex items-center bg-gray-100 dark:bg-[#12121a] p-1 rounded-2xl">
+                    <button id="btnTypeDeposit" type="button" onclick="setTransactionType('deposit')" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white shadow transition">+ Setoran</button>
+                    <button id="btnTypeWithdraw" type="button" onclick="setTransactionType('withdraw')" class="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-gray-800 transition">- Penarikan</button>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Nominal Transaksi</label>
+                    <input id="inputTxAmount" type="text" required placeholder="0" oninput="handleFormattedInput(this)" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-sm font-bold focus:outline-none focus:border-theme-accent">
+                </div>
+
+                <!-- CHIP SHORTCUT NOMINAL -->
+                <div class="flex items-center space-x-1.5 pt-1">
+                    <button id="chipPeriodic" type="button" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#222230] text-[10px] font-semibold text-gray-600 dark:text-gray-300">Rencana Rutin</button>
+                    <button id="chipRemaining" type="button" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#222230] text-[10px] font-semibold text-gray-600 dark:text-gray-300">Pelunasan Kekurangan</button>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Catatan Keterangan (Opsional)</label>
+                    <input id="inputTxNote" type="text" placeholder="Misal: Sisihan uang jajan" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-3 bg-theme-accent hover:bg-theme-accent-hover text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
+                        Simpan Transaksi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. MODAL DETAIL POPUP TRANSAKSI -->
+    <div id="modalTxDetail" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#181824] border border-gray-200 dark:border-gray-800/80 w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center space-y-4">
+            <div>
+                <span id="txDetailDate" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">18 Okt 2026</span>
+                <h3 id="txDetailAmount" class="text-3xl font-extrabold text-emerald-500 tracking-tight">+ Rp 0</h3>
+                <p id="txDetailNote" class="text-xs text-gray-500 dark:text-gray-300 mt-2 italic">"Catatan Tabungan"</p>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-2">
+                <button onclick="handleEditTxFromModal()" class="flex-1 py-2 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 font-semibold rounded-xl text-xs transition">
+                    <i class="fa-solid fa-pen-to-square mr-1"></i> Ubah
+                </button>
+                <button onclick="handleDeleteTxFromModal()" class="flex-1 py-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 font-semibold rounded-xl text-xs transition">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Hapus
+                </button>
+            </div>
+            <button onclick="closeModalTxDetail()" class="w-full py-2 bg-gray-100 dark:bg-[#222230] text-gray-500 font-semibold rounded-xl text-xs">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- 6. MODAL PENGINGAT (REMINDER CONFIG) -->
+    <div id="modalReminder" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#181824] border border-gray-200 dark:border-gray-800/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white">Atur Pengingat Tabungan</h3>
+                <button onclick="closeModalReminder()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleSaveReminder(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Waktu Jam Pengingat</label>
+                    <input id="inputReminderTime" type="time" value="12:00" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Frekuensi Pengingat</label>
+                    <select id="inputReminderFreq" class="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#101016] border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:border-theme-accent">
+                        <option value="Setiap Hari">Setiap Hari</option>
+                        <option value="Setiap Minggu">Setiap Minggu</option>
+                        <option value="Setiap Bulan">Setiap Bulan</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-between py-1">
+                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Aktifkan Notifikasi Browser</span>
+                    <input id="inputReminderActive" type="checkbox" checked class="w-4 h-4 accent-blue-600">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-3 bg-theme-accent hover:bg-theme-accent-hover text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
+                        Simpan Pengingat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 7. MODAL GAMIFIKASI (PENCAPAIAN & LENCANA) -->
+    <div id="modalBadges" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#181824] border border-gray-200 dark:border-gray-800/80 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-trophy text-amber-500 text-lg"></i>
+                    <h3 class="font-bold text-base text-gray-900 dark:text-white">Pencapaian & Lencana</h3>
+                </div>
+                <button onclick="closeModalBadges()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="badgesGridContainer" class="grid grid-cols-2 gap-3 overflow-y-auto pr-1 flex-1">
+                <!-- Dynamic Badges -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. MODAL KONFIRMASI HAPUS CELENGAN -->
+    <div id="modalConfirmDelete" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#181824] border border-gray-200 dark:border-gray-800/80 w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center space-y-4">
+            <div class="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-gray-900 dark:text-white">Hapus Celengan Ini?</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Seluruh riwayat transaksi pada celengan ini akan dihapus permanen.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="closeConfirmDelete()" class="flex-1 py-2.5 bg-gray-100 dark:bg-[#222230] text-gray-600 dark:text-gray-300 font-semibold rounded-xl text-xs">Batal</button>
+                <button onclick="executeDeleteSavings()" class="flex-1 py-2.5 bg-rose-600 text-white font-bold rounded-xl text-xs shadow-md">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST FLOATING NOTIFICATION -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900/90 dark:bg-white/90 backdrop-blur-md text-white dark:text-gray-900 px-5 py-2.5 rounded-full shadow-2xl text-xs font-semibold pointer-events-none opacity-0 transition-all duration-300 z-50 flex items-center space-x-2">
+        <i class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
         <span id="toastMsg">Pesan Notifikasi</span>
     </div>
 
-    <!-- Mobile FAB (+ Tambah Tabungan) -->
-    <div id="fabAddSavings" class="fixed bottom-6 right-6 z-30 sm:hidden">
-        <button onclick="openModalAddSavings()" class="bg-theme-accent text-white font-semibold px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-sm transition transform active:scale-95">
-            <i class="fa-solid fa-plus text-base"></i>
-            <span>Tambah Tabungan</span>
-        </button>
-    </div>
-
-    <!-- Firebase SDK & Script Utama -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- SCRIPT JAVASCRIPT -->
     <script src="script.js"></script>
 </body>
 </html>
