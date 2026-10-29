@@ -1,0 +1,17 @@
+# LOGBOOK PEMANFAATAN AI (AI_LOGBOOK.md)
+
+**Nama Proyek**: TABUNGin - Web App Tabungan  
+**Nama Tim / Anggota**: [Muhamad Riski Ramadan / Muhammad Duta Setiawan Pamungkas]  
+**Tanggal**: 29 Oktober 2026  
+
+---
+
+| Tahap | Perintah Prompt Siswa | Respon Kode AI | Validasi & Modifikasi Mandiri |
+| :--- | :--- | :--- | :--- |
+| **1. Ideasi (Eksplorasi Ide & Perancangan Solusi)** | *"Buatkan konsep web app tabungan bernama TABUNGin dengan fitur simulasi target menabung, gamifikasi lencana/badges, dan antarmuka modern Tailwind CSS."* | `BADGES_DEFINITIONS = [{ id: 'badge_first_deposit', icon: 'fa-rocket', title: 'Langkah Pertama 🚀' ... }];` | <br>1. Mengubah struktur susunan kartu celengan di HTML & JS agar tata letaknya (*layout*) 100% persis seperti desain awal.<br>2. Menyesuaikan kelas Tailwind CSS (`bg-white dark:bg-[#181820]`, `rounded-3xl`, `p-5`) untuk menjaga estetika visual.<br>3. Menyaring jenis indikator lencana (*badges*) agar hanya menampilkan pencapaian yang relevan dengan alur tabungan. |
+| **2. Scaffolding (Penyusunan Kerangka Kode)** | *"Rancang struktur HTML dan JavaScript untuk aplikasi pencatatan tabungan, integrasi Firebase Firestore, serta kalkulator simulasi target deadline."* | `function calculateSavingsTargetSimulation() { const targetAmount = parseNominal(...); const diffDays = ...; }` | <br>1. Menambahkan *event listener* `input` pada elemen `#inputTargetAmount` saat `DOMContentLoaded` agar kalkulasi simulasi berjalan *real-time*.<br>2. Mengintegrasikan konfigurasi Firebase SDK (`apiKey`, `projectId`, `storageBucket`) secara manual menggunakan akun Firestore tim.<br>3. Mengatur elemen input tanggal `#inputTargetDeadline` di dalam form modal `#modalSavings` agar tidak merusak tampilan form lain. |
+| **3. Debugging (Pemecahan Masalah & Penanganan Galat)** | *"Mengapa setelah daftar akun baru user masih harus mengetik ulang username & password untuk login? Buatkan sistem auto-login setelah register dan fitur soft-delete 24 jam."* | `// AUTO-LOGIN SETELAH PENDAFTARAN BERHASIL`<br>`currentUser = username;`<br>`localStorage.setItem('tabungin_username', currentUser);`<br>`closeModalUsername(); saveStorage(); updateUserUI();` | <br>1. Mengubah alur fungsi `handleAuthSubmit` pada kondisi `currentAuthMode === 'register'` dengan langsung menetapkan `currentUser = username` dan memperbarui `localStorage`.<br>2. Menambahkan penghitung mundur (*countdown*) `setInterval` 20 detik pada tombol `#btnDeleteAccount` untuk menonaktifkan klik tak sengaja.<br>3. Menulis fungsi `validateUserSession` untuk mengecek status `isDeleted` dan menghitung selisih jam (`deletedAt`) sebelum penghapusan permanen dari Firestore. |
+| **4. Refleksi & Penjelasan Kode** | *"Jelaskan bagaimana alur parsing angka, pemformatan mata uang Rupiah, dan sinkronisasi data lokal ke Firebase Firestore pada script.js."* | `function formatCurrency(amount, symbol = 'Rp') { const formatted = formatDots(amount); return \`${symbol} ${formatted}\`; }` | *<br>1. Menguji fungsi `parseNominal` dan `formatDots` secara mandiri untuk menangani *input string* acak agar tidak memicu error `NaN`.<br>2. Memverifikasi struktur objek `savingsData` untuk memastikan riwayat transaksi (`history[]`) tersimpan dengan tipe data angka yang valid.<br>3. Menguji alur *fallback* LocalStorage apabila koneksi internet terputus sehingga data tabungan lokal tidak hilang. |
+```
+
+---
