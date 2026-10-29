@@ -366,40 +366,14 @@ async function handleAuthSubmit(e) {
                 return;
             }
             
-            if (!savingsData || savingsData.length === 0) {
-                savingsData = [
-                    {
-                        id: 'savings-mac-001',
-                        title: 'Beli MAC (Hanya Contoh)',
-                        targetAmount: 13500000,
-                        freqAmount: 50000,
-                        freqType: 'Perminggu',
-                        currencySymbol: 'Rp',
-                        currencyFlag: '🇮🇩',
-                        currencyCode: 'IDR',
-                        imageUrl: PRESET_IMAGES.mac,
-                        createdDate: formatDateOnlyNow(),
-                        reminderTime: '12:00',
-                        reminderFreq: 'Setiap Minggu',
-                        reminderEnabled: false,
-                        history: [
-                            {
-                                id: 'tx-001',
-                                type: 'deposit',
-                                amount: 2200000,
-                                dateStr: formatDateNow(),
-                                note: 'Setoran awal tabungan Mac'
-                            }
-                        ]
-                    }
-                ];
-            }
+            // PENGGUNA BARU LANGSUNG KOSONG (TIDAK MEMBAWA SAMPLE DATA MAC)
+            savingsData = [];
 
-            // SIMPAN DATA AKUN BARU
+            // SIMPAN DATA AKUN BARU KE FIRESTORE
             await docRef.set({
                 username: username,
                 password: password,
-                items: savingsData,
+                items: [],
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
@@ -411,7 +385,7 @@ async function handleAuthSubmit(e) {
                 });
             }
 
-            showToast(`Akun @${username} berhasil dibuat & disinkronkan! 🎉`);
+            showToast(`Akun @${username} berhasil dibuat! 🎉`);
         } else {
             // PROSES LOGIN DENGAN PENCEGAHAN BRUTE FORCE
             if (!docSnap.exists) {
@@ -501,8 +475,8 @@ async function loadStorage() {
             const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
             const docSnap = await docRef.get();
 
-            if (docSnap.exists && Array.isArray(docSnap.data().items)) {
-                savingsData = docSnap.data().items;
+            if (docSnap.exists) {
+                savingsData = Array.isArray(docSnap.data().items) ? docSnap.data().items : [];
                 renderHome();
                 evaluateBadges();
                 return;
@@ -518,7 +492,12 @@ async function loadStorage() {
         if (stored) {
             savingsData = JSON.parse(stored);
         } else {
-            seedSampleData(false);
+            // HANYA MUAT DATA CONTOH JIKA DALAM MODE GUEST (BELUM LOGIN)
+            if (!currentUser) {
+                seedSampleData(false);
+            } else {
+                savingsData = [];
+            }
         }
     } catch (err) {
         savingsData = [];
