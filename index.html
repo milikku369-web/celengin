@@ -67,10 +67,16 @@
             </div>
 
             <!-- Header Actions -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5">
                 <button onclick="openModalAddSavings()" class="hidden sm:flex items-center gap-2 bg-theme-accent text-white font-medium px-4 py-2 rounded-xl text-xs shadow-lg transition active:scale-95">
                     <i class="fa-solid fa-plus text-white"></i>
                     <span class="text-white">Tambah Tabungan</span>
+                </button>
+
+                <!-- TOMBOL LENCANA / PIALA GAMIFIKASI DI SEBELAH TITIK TIGA -->
+                <button onclick="openModalBadges()" type="button" title="Pencapaian & Lencana" class="w-10 h-10 rounded-full flex items-center justify-center text-amber-500 hover:text-amber-600 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 transition active:scale-95 shadow-sm relative">
+                    <i class="fa-solid fa-trophy text-base"></i>
+                    <span id="badgeCountIndicator" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border border-white dark:border-[#0d0d0f] hidden">0</span>
                 </button>
 
                 <div class="relative">
@@ -227,7 +233,6 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <!-- TOMBOL EKSPOR PDF BARU -->
                     <button onclick="exportToPDF()" class="bg-gray-100 dark:bg-[#1d1d28] border border-gray-300 dark:border-gray-800 text-rose-500 dark:text-rose-400 hover:border-rose-500/50 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition active:scale-95" title="Ekspor PDF">
                         <i class="fa-solid fa-file-pdf text-sm"></i><span class="hidden sm:inline">Ekspor PDF</span>
                     </button>
@@ -604,6 +609,24 @@
                     <button type="submit" class="px-5 py-2.5 bg-theme-accent text-white font-medium rounded-xl shadow-md">Simpan Password Baru</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL 8: KOLEKSI LENCANA & GAMIFIKASI -->
+    <div id="modalBadges" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#1c1c26] border border-gray-200 dark:border-gray-700/80 w-full max-w-md rounded-3xl p-6 shadow-2xl animate-fade-in text-gray-800 dark:text-gray-200 relative max-h-[85vh] flex flex-col">
+            <button type="button" onclick="closeModalBadges()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition z-20 cursor-pointer">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="text-center pb-3 border-b border-gray-200 dark:border-gray-700/60 mb-4 flex-shrink-0">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/40 text-amber-500 border border-amber-300 dark:border-amber-700 flex items-center justify-center mx-auto mb-2 text-xl shadow-md">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">Pencapaian & Lencana</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kumpulkan semua piala digital dengan rajin menabung!</p>
+            </div>
+            
+            <div id="badgesGridContainer" class="grid grid-cols-2 gap-3 overflow-y-auto pr-1 flex-1 no-scrollbar"></div>
         </div>
     </div>
 
