@@ -69,12 +69,26 @@ Catatan lengkap per tahap ada di [`AI_LOGBOOK.md`](./AI_LOGBOOK.md).
 
 ## d. Panduan Penggunaan
 
-1. Buka https://milikku369-web.github.io/tabungin/
-2. Daftar akun baru dengan username dan password, lalu kamu otomatis masuk.
-3. Buat celengan baru dan isi nama, nominal target, serta tenggat waktu.
-4. Lihat simulasi: berapa yang perlu ditabung per hari/minggu/bulan.
-5. Catat setoran tiap kali menabung, lalu pantau progres dan riwayat transaksi.
-6. Kumpulkan lencana seiring pencapaianmu.
+1. **Buka Aplikasi & Pendaftaran Akun**  
+   Buka https://milikku369-web.github.io/tabungin/. Daftar akun baru dengan username dan password, lalu kamu akan otomatis masuk ke dalam sistem.  
+   ![Tampilan Registrasi](https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/step-1-register.jpg)
+
+2. **Membuat Celengan Baru**  
+   Buat celengan baru dan isi nama barang impian, nominal target, serta tenggat waktu (deadline).  
+   ![Membuat Celengan](https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/step-2-buat-celengan.jpg)
+
+3. **Melihat Simulasi Target Menabung**  
+   Sistem akan secara otomatis menghitung berapa nominal yang perlu kamu tabung per hari, minggu, atau bulan secara *real-time*.  
+   ![Simulasi Target](https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/step-3-simulasi.jpg)
+
+4. **Mencatat Setoran & Transaksi**  
+   Catat setoran tiap kali menabung, pantau progres tabungan, serta lihat riwayat transaksi dan unduh rekap cetak PDF.  
+   ![Mencatat Setoran](https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/step-4-setoran.jpg)
+
+5. **Kumpulkan Lencana (Badges)**  
+   Buka menu Lencana untuk melihat berbagai pencapaian gamifikasi yang berhasil kamu buka seiring konsistensi menabungmu.  
+   ![Lencana Gamifikasi](https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/step-5-badges.jpg)
+.
 
 **Menjalankan secara lokal:**
 ```bash
