@@ -88,7 +88,7 @@ Catatan lengkap per tahap ada di [`AI_LOGBOOK.md`](./AI_LOGBOOK.md).
 5. **Kumpulkan Lencana (Badges)**  
    Buka menu Lencana untuk melihat berbagai pencapaian gamifikasi yang berhasil kamu buka seiring konsistensi menabungmu.  
    ![Lencana Gamifikasi](https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/step-5-badges.jpg)
-.
+
 
 **Menjalankan secara lokal:**
 ```bash
