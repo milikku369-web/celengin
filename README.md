@@ -1,4 +1,4 @@
-# Tabungin
+# 
 # TABUNGin - Web App Tabungan
 
 ![Tampilan Bannernya](https://raw.githubusercontent.com/milikku369-web/tabungin/main/assets/bannernya.jpeg)
@@ -32,6 +32,7 @@ Aplikasi Keuangan Terlalu Rumit: Aplikasi finansial di Play Store/App Store umum
 - Fitur cetak riwayat catatan tabungan dalam bentuk file PDF
 - Penambahan fitur customisasi warna dan font 
 - Custom gambar catatan tabungan
+- Grafik tren tabungan
 
 
 ## b. Teknologi yang Digunakan
