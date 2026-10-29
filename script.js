@@ -123,6 +123,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     initBrowserNotifications();
 });
 
+// VALIDASI SESI KEAMANAN OTOMATIS
+async function validateUserSession() {
+    if (!currentUser || !db) return true;
+
+    try {
+        const docRef = db.collection(COLLECTION_NAME).doc(currentUser);
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+            showToast("Akun kamu telah dihapus dari sistem!");
+            forceLogoutSystem();
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.warn("Gagal memvalidasi sesi akun:", err);
+        return true;
+    }
+}
+
+function forceLogoutSystem() {
+    localStorage.removeItem('tabungin_username');
+    currentUser = '';
+    savingsData = [];
+    
+    closeModalSavings();
+    closeModalTransaction();
+    closeModalChangePassword();
+    closeModalReminder();
+    
+    updateUserUI();
+    showView('home');
+    loadStorage();
+}
+
 // GAMIFIKASI & BADGES SYSTEM
 function evaluateBadges() {
     let unlockedCount = 0;
@@ -221,6 +257,9 @@ async function handleChangePasswordSubmit(e) {
         return;
     }
 
+    const isValid = await validateUserSession();
+    if (!isValid) return;
+
     const oldPassword = document.getElementById('inputOldPassword')?.value || "";
     const newPassword = document.getElementById('inputNewPassword')?.value || "";
 
@@ -245,6 +284,7 @@ async function handleChangePasswordSubmit(e) {
 
         if (!docSnap.exists) {
             showToast("Akun tidak ditemukan!");
+            forceLogoutSystem();
             return;
         }
 
@@ -312,7 +352,6 @@ async function handleAuthSubmit(e) {
 
     const now = Date.now();
 
-    // 1. KEAMANAN: CEK DIBLOKIR LOGIN KARENA 5X SALAH (JEDA 1 MENIT)
     if (currentAuthMode === 'login' && lockUntil > now) {
         const remainingSeconds = Math.ceil((lockUntil - now) / 1000);
         showToast(`Akses terkunci! Silakan tunggu ${remainingSeconds} detik lagi.`);
@@ -343,7 +382,6 @@ async function handleAuthSubmit(e) {
         const docSnap = await docRef.get();
 
         if (currentAuthMode === 'register') {
-            // 2. KEAMANAN: CEK PEMBATASAN DAFTAR AKUN BARU (1X PER 12 JAM VIA IP)
             const userIP = await getPublicIP();
             const twelveHoursInMs = 12 * 60 * 60 * 1000;
 
@@ -365,11 +403,9 @@ async function handleAuthSubmit(e) {
                 showToast("Username sudah dipakai, pilih username lain!");
                 return;
             }
-            
-            // PENGGUNA BARU LANGSUNG KOSONG (TIDAK MEMBAWA SAMPLE DATA MAC)
+
             savingsData = [];
 
-            // SIMPAN DATA AKUN BARU KE FIRESTORE
             await docRef.set({
                 username: username,
                 password: password,
@@ -377,7 +413,6 @@ async function handleAuthSubmit(e) {
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // CATAT IP KELUARAN KE FIRESTORE UNTUK PEMBATASAN 12 JAM
             if (userIP !== "unknown_ip") {
                 await db.collection("ip_registers").doc(userIP.replace(/\./g, '_')).set({
                     ip: userIP,
@@ -387,7 +422,6 @@ async function handleAuthSubmit(e) {
 
             showToast(`Akun @${username} berhasil dibuat! 🎉`);
         } else {
-            // PROSES LOGIN DENGAN PENCEGAHAN BRUTE FORCE
             if (!docSnap.exists) {
                 showToast("Username tidak ditemukan! Silakan klik 'Daftar Baru'");
                 return;
@@ -399,7 +433,7 @@ async function handleAuthSubmit(e) {
                 localStorage.setItem('tabungin_login_attempts', loginAttempts);
 
                 if (loginAttempts >= 5) {
-                    lockUntil = Date.now() + 60000; // Dikunci 1 Menit (60.000 ms)
+                    lockUntil = Date.now() + 60000;
                     localStorage.setItem('tabungin_lock_until', lockUntil);
                     loginAttempts = 0;
                     localStorage.setItem('tabungin_login_attempts', '0');
@@ -410,7 +444,6 @@ async function handleAuthSubmit(e) {
                 return;
             }
 
-            // LOGIN BERHASIL -> RESET SELURUH ATTEMPTS & LOCK
             loginAttempts = 0;
             localStorage.setItem('tabungin_login_attempts', '0');
             localStorage.removeItem('tabungin_lock_until');
@@ -438,11 +471,7 @@ async function handleAuthSubmit(e) {
 
 function handleLogout() {
     document.getElementById('topMenu')?.classList.add('hidden');
-    localStorage.removeItem('tabungin_username');
-    currentUser = '';
-    
-    loadStorage();
-    updateUserUI();
+    forceLogoutSystem();
     showToast("Kamu kembali ke Mode Guest (Tamu)");
 }
 
@@ -468,7 +497,7 @@ function updateUserUI() {
     }
 }
 
-// STORAGE MANAGEMENT
+// STORAGE MANAGEMENT DENGAN PROTEKSI AKUN HANTU
 async function loadStorage() {
     if (currentUser && db) {
         try {
@@ -479,6 +508,10 @@ async function loadStorage() {
                 savingsData = Array.isArray(docSnap.data().items) ? docSnap.data().items : [];
                 renderHome();
                 evaluateBadges();
+                return;
+            } else {
+                showToast("Sesi berakhir, akun tidak ditemukan di database.");
+                forceLogoutSystem();
                 return;
             }
         } catch (err) {
@@ -492,7 +525,6 @@ async function loadStorage() {
         if (stored) {
             savingsData = JSON.parse(stored);
         } else {
-            // HANYA MUAT DATA CONTOH JIKA DALAM MODE GUEST (BELUM LOGIN)
             if (!currentUser) {
                 seedSampleData(false);
             } else {
@@ -667,7 +699,7 @@ function calculateEstimasiText(item) {
     return `${sisaPeriode} ${unit} Lagi`;
 }
 
-// FUNGSI EKSPOR CATATAN TABUNGAN KE DOKUMEN PDF (ANTI POP-UP BLOCKED)
+// FUNGSI EKSPOR PDF (ANTI POP-UP BLOCKED)
 function exportToPDF() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -1038,7 +1070,7 @@ function renderDetailHistory(item) {
     }).join('');
 }
 
-// LIVE PREVIEW & AUTOMATIC COMPRESSION (MAX 1MB)
+// LIVE PREVIEW & AUTOMATIC COMPRESSION
 function updateLivePreview(url) {
     const previewImg = document.getElementById('modalImgPreview');
     const placeholder = document.getElementById('modalImgPlaceholder');
@@ -1056,7 +1088,6 @@ function updateLivePreview(url) {
     }
 }
 
-// VALIDASI MAKSIMAL 1MB & KOMPRESI OTOMATIS
 function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -1117,7 +1148,7 @@ function setPresetImg(key) {
     }
 }
 
-// MODAL CELENGAN
+// MODAL CELENGAN DENGAN CHECK VALIDASI
 function setFreqType(type) {
     const freqInput = document.getElementById('inputFreqType');
     if (freqInput) freqInput.value = type;
@@ -1201,8 +1232,12 @@ function closeModalSavings() {
     document.getElementById('modalSavings')?.classList.add('hidden');
 }
 
-function handleSaveSavings(e) {
+async function handleSaveSavings(e) {
     if (e) e.preventDefault();
+
+    const isValid = await validateUserSession();
+    if (!isValid) return;
+
     const getVal = (id) => document.getElementById(id)?.value || "";
 
     const id = getVal('inputSavingsId');
@@ -1258,7 +1293,7 @@ function handleSaveSavings(e) {
     closeModalSavings();
 }
 
-// MODAL TRANSACTION
+// MODAL TRANSACTION DENGAN CHECK VALIDASI
 function openModalTransaction() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -1318,9 +1353,12 @@ function setTxChipAmount(val) {
     if (elem) elem.value = formatDots(val);
 }
 
-function handleSaveTransaction(e) {
+async function handleSaveTransaction(e) {
     if (e) e.preventDefault();
     if (!currentDetailId) return;
+
+    const isValid = await validateUserSession();
+    if (!isValid) return;
 
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
@@ -1448,8 +1486,11 @@ function handleEditTxFromModal() {
     document.getElementById('modalTransaction')?.classList.remove('hidden');
 }
 
-function handleDeleteTxFromModal() {
+async function handleDeleteTxFromModal() {
     if (!currentDetailId || !selectedTxIdForModal) return;
+
+    const isValid = await validateUserSession();
+    if (!isValid) return;
 
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item || !item.history) return;
@@ -1464,7 +1505,7 @@ function handleDeleteTxFromModal() {
     selectedTxIdForModal = null;
 }
 
-// BROWSER NOTIFICATIONS HANDLER (SISTEM LOKAL BROWSER)
+// BROWSER NOTIFICATIONS HANDLER
 function initBrowserNotifications() {
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
@@ -1500,9 +1541,12 @@ function closeModalReminder() {
     document.getElementById('modalReminder')?.classList.add('hidden');
 }
 
-function handleSaveReminder(e) {
+async function handleSaveReminder(e) {
     if (e) e.preventDefault();
     if (!currentDetailId) return;
+
+    const isValid = await validateUserSession();
+    if (!isValid) return;
 
     const item = savingsData.find(s => s.id === currentDetailId);
     if (!item) return;
@@ -1548,8 +1592,12 @@ function closeConfirmDelete() {
     document.getElementById('modalConfirmDelete')?.classList.add('hidden');
 }
 
-function executeDeleteSavings() {
+async function executeDeleteSavings() {
     if (!currentDetailId) return;
+
+    const isValid = await validateUserSession();
+    if (!isValid) return;
+
     savingsData = savingsData.filter(s => s.id !== currentDetailId);
     saveStorage();
     closeConfirmDelete();
