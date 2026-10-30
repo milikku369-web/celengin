@@ -42,7 +42,7 @@ Aplikasi Keuangan Terlalu Rumit: Aplikasi finansial di Play Store/App Store umum
 | Bahasa | HTML, CSS, JavaScript |
 | Styling | Tailwind CSS, Font Poppins |
 | Database & Backend | Firebase , LocalStorage (cadangan lokal) |
-| Notifikasi | Firebase Cloud Messaging,  |
+| Notifikasi | Firebase Cloud Messaging  |
 | PWA | Service Worker (`sw.js`) |
 | Platform publikasi | GitHub Pages, GitHub Actions |
 
