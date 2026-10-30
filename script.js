@@ -783,6 +783,7 @@ function calculateSavingsTargetSimulation() {
     `;
 }
 
+// EKSPOR PDF LENGKAP DENGAN FORMAT HEADER, RENCANA RUTIN & FOOTER
 function exportToPDF() {
     if (!currentDetailId) return;
     const item = savingsData.find(s => s.id === currentDetailId);
@@ -826,33 +827,71 @@ function exportToPDF() {
                 body { font-family: 'Poppins', sans-serif; padding: 30px; color: #1e293b; background: #fff; margin: 0; }
                 .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #3b82f6; padding-bottom: 15px; margin-bottom: 25px; }
                 .logo-text { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; }
+                .logo-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+                .doc-info { text-align: right; font-size: 11px; color: #64748b; }
                 .card-title { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+                .card-title h2 { margin: 0 0 6px 0; font-size: 18px; color: #0f172a; }
+                .card-title p { margin: 0; font-size: 12px; color: #64748b; }
                 .grid-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
                 .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center; }
+                .stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
+                .stat-value { font-size: 16px; font-weight: 800; color: #0f172a; }
                 table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-                th { background: #f1f5f9; color: #475569; padding: 10px 8px; text-align: left; border-bottom: 2px solid #cbd5e1; }
+                th { background: #f1f5f9; color: #475569; font-weight: 600; padding: 10px 8px; text-align: left; border-bottom: 2px solid #cbd5e1; }
+                .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 11px; color: #94a3b8; }
             </style>
         </head>
         <body>
             <div class="header">
                 <div>
                     <h1 class="logo-text">TABUNGin</h1>
-                    <p style="font-size: 12px; color: #64748b;">Laporan Rekap Catatan Tabungan</p>
+                    <p class="logo-sub">Laporan Rekap Catatan Tabungan</p>
+                </div>
+                <div class="doc-info">
+                    <p style="margin: 0 0 4px 0;"><strong>Dicetak Pada:</strong> ${formatDateNow()}</p>
+                    <p style="margin: 0;"><strong>Pengguna:</strong> @${currentUser || 'Guest'}</p>
                 </div>
             </div>
+
             <div class="card-title">
-                <h2 style="margin:0;">Target Impian: ${escapeHtml(item.title)}</h2>
-                <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;">Status: <strong>${pct}% Tercapai</strong></p>
+                <h2>Target Impian: ${escapeHtml(item.title)}</h2>
+                <p>Status Capaian: <strong>${pct}% Tercapai</strong> • Rencana Rutin: <strong>${formatCurrency(item.freqAmount, symbol)} / ${item.freqType || 'Minggu'}</strong></p>
             </div>
+
             <div class="grid-summary">
-                <div class="stat-box"><div>Target Tabungan</div><div style="font-weight:bold;">${formatCurrency(item.targetAmount, symbol)}</div></div>
-                <div class="stat-box"><div style="color:#059669;">Total Terkumpul</div><div style="font-weight:bold; color:#059669;">${formatCurrency(terkumpul, symbol)}</div></div>
-                <div class="stat-box"><div style="color:#e11d48;">Sisa Kekurangan</div><div style="font-weight:bold; color:#e11d48;">${formatCurrency(kekurang, symbol)}</div></div>
+                <div class="stat-box">
+                    <div class="stat-label">Target Tabungan</div>
+                    <div class="stat-value">${formatCurrency(item.targetAmount, symbol)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label" style="color: #059669;">Total Terkumpul</div>
+                    <div class="stat-value" style="color: #059669;">${formatCurrency(terkumpul, symbol)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label" style="color: #e11d48;">Sisa Kekurangan</div>
+                    <div class="stat-value" style="color: #e11d48;">${formatCurrency(kekurang, symbol)}</div>
+                </div>
             </div>
+
+            <h3 style="font-size: 14px; margin-bottom: 10px; color: #334155;">Riwayat Transaksi</h3>
             <table>
-                <thead><tr><th>#</th><th>Tanggal</th><th>Jenis</th><th>Keterangan</th><th style="text-align:right;">Nominal</th></tr></thead>
-                <tbody>${historyRows || '<tr><td colspan="5" style="text-align:center; padding:20px;">Belum ada riwayat.</td></tr>'}</tbody>
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">#</th>
+                        <th style="width: 150px;">Tanggal</th>
+                        <th style="width: 110px;">Jenis</th>
+                        <th>Keterangan Catatan</th>
+                        <th style="text-align: right; width: 140px;">Nominal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${historyRows || '<tr><td colspan="5" style="text-align:center; padding: 20px; color:#94a3b8;">Belum ada riwayat transaksi.</td></tr>'}
+                </tbody>
             </table>
+
+            <div class="footer">
+                <p>Dokumen ini dicetak secara otomatis dari aplikasi TABUNGin sebagai rekap tabungan yang sah.</p>
+            </div>
         </body>
         </html>
     `);
@@ -1022,7 +1061,7 @@ function renderHome() {
     }
 }
 
-// DETAIL PAGE RENDERING & GRAFIK TREN (MURNI TANPA BADGE STATUS)
+// DETAIL PAGE RENDERING & GRAFIK TREN (CLEAN TANPA BADGE STATUS)
 function openDetailView(id) {
     currentDetailId = id;
     const item = savingsData.find(s => s.id === id);
